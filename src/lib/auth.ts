@@ -14,18 +14,22 @@ export interface SessionContext {
  * database, never from the browser). Cached per request.
  */
 export const getSession = cache(async (): Promise<SessionContext | null> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("auth_user_id", user.id)
-    .maybeSingle<Profile>();
-  if (!profile) return null;
-  return { userId: user.id, profile };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("auth_user_id", user.id)
+      .maybeSingle<Profile>();
+    if (!profile) return null;
+    return { userId: user.id, profile };
+  } catch (e) {
+    return null;
+  }
 });
 
 /** Page/layout guard. Redirects when not signed in, inactive or not permitted. */
