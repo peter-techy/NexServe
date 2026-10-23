@@ -7,18 +7,15 @@ function isPublic(pathname: string) {
   return pathname === "/" || PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-type CookieOptions = Record<string, unknown> & { maxAge?: number; expires?: Date };
+const DEFAULT_URL = "https://scloeuggygbouslegfyw.supabase.co";
+const DEFAULT_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjbG9ldWdneWdib3VzbGVnZnl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NzA4NjEsImV4cCI6MjEwODM0Njg2MX0.aOrj7LmmBKczdO0r93RlGl8JNNF4YTtdOOpA9PYnkNY";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const remember = request.cookies.get("ns_remember")?.value;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    // Misconfiguration: allow public pages to render an explanatory error.
-    return response;
-  }
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_KEY;
 
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -29,13 +26,7 @@ export async function middleware(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
         response = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) => {
-          let opts = options as CookieOptions;
-          if (remember === "0" && opts.maxAge !== 0) {
-            opts = { ...opts };
-            delete opts.maxAge;
-            delete opts.expires;
-          }
-          response.cookies.set(name, value, opts);
+          response.cookies.set(name, value, options);
         });
       },
     },
@@ -47,12 +38,21 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname, search } = request.nextUrl;
+
   if (!user && !isPublic(pathname)) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
     loginUrl.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // If already logged in and visiting login, redirect to dashboard
+  if (user && pathname === "/login") {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/dashboard";
+    dashboardUrl.search = "";
+    return NextResponse.redirect(dashboardUrl);
   }
 
   response.headers.set("X-Frame-Options", "DENY");

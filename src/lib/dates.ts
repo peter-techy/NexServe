@@ -146,12 +146,14 @@ export interface DateRange {
 
 /** Resolves period/from/to search params into an inclusive business-date range. */
 export function resolveRange(
-  params: { period?: string; from?: string; to?: string },
-  tz: string,
+  params?: { period?: string; from?: string; to?: string } | null,
+  tz: string = DEFAULT_TIMEZONE,
   defaultPeriod: PeriodKey = "today",
 ): DateRange {
-  const today = todayYmd(tz);
-  const period = (params.period as PeriodKey) || (params.from || params.to ? "custom" : defaultPeriod);
+  const safeParams = params || {};
+  const safeTz = tz && isValidTimezone(tz) ? tz : DEFAULT_TIMEZONE;
+  const today = todayYmd(safeTz);
+  const period = (safeParams.period as PeriodKey) || (safeParams.from || safeParams.to ? "custom" : defaultPeriod);
   switch (period) {
     case "today":
       return { from: today, to: today, period };
@@ -166,8 +168,8 @@ export function resolveRange(
     case "month":
       return { from: `${today.slice(0, 8)}01`, to: today, period };
     case "custom": {
-      const from = params.from && isValidYmd(params.from) ? params.from : today;
-      const to = params.to && isValidYmd(params.to) ? params.to : from;
+      const from = safeParams.from && isValidYmd(safeParams.from) ? safeParams.from : today;
+      const to = safeParams.to && isValidYmd(safeParams.to) ? safeParams.to : from;
       if (from > to) return { from: to, to: from, period, error: "The start date was after the end date; the range has been swapped." };
       const days = (Date.parse(to) - Date.parse(from)) / 86_400_000;
       if (days > 366) return { from: addDays(to, -366), to, period, error: "Date ranges are limited to one year." };

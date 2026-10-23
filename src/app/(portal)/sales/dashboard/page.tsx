@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getSettings } from "@/lib/settings";
-import { resolveRange, todayYmd } from "@/lib/dates";
+import { getSettings, DEFAULT_SETTINGS } from "@/lib/settings";
+import { resolveRange } from "@/lib/dates";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard, EmptyState } from "@/components/ui/feedback";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
@@ -14,94 +14,131 @@ import { Users, Clock, CheckCircle2, CalendarClock, Plus, ArrowRight } from "luc
 import type { AttendanceSession, WorkStatus } from "@/lib/types";
 
 interface Props {
-  searchParams: Promise<{ period?: string; from?: string; to?: string }>;
+  searchParams?: Promise<{ period?: string; from?: string; to?: string }>;
 }
 
 export default async function SalesDashboardPage({ searchParams }: Props) {
   const session = await requireRole(["sales", "super_admin"]);
-  const params = await searchParams;
-  const settings = await getSettings();
+  const params = (await searchParams) || {};
+  
+  let settings = DEFAULT_SETTINGS;
+  try {
+    settings = await getSettings();
+  } catch {
+    // fallback to DEFAULT_SETTINGS
+  }
+
   const tz = settings.business_timezone;
   const range = resolveRange(params, tz, "today");
 
   const supabase = await createClient();
 
   // Call database metric RPC (strictly computed on DB side)
-  const { data: metricsData } = await supabase.rpc("get_activity_metrics", {
-    p_from: range.from,
-    p_to: range.to,
-    p_employee: session.profile.role === "sales" ? session.profile.id : null,
-  });
-
-  const metrics = metricsData?.[0] || {
+  let metrics = {
     clients_contacted: 0,
     followups_pending: 0,
     deals_won: 0,
     work_seconds: 0,
   };
 
-  // Fetch recent client activities for this sales employee
-  let activityQuery = supabase
-    .from("client_activities")
-    .select(`
-      id,
-      contact_date,
-      contact_source,
-      work_status,
-      criteria,
-      follow_up_required,
-      follow_up_at,
-      client:clients (
-        id,
-        person_name,
-        business_name,
-        location,
-        client_number
-      )
-    `)
-    .order("contact_date", { ascending: false })
-    .limit(5);
-
-  if (session.profile.role === "sales") {
-    activityQuery = activityQuery.eq("employee_id", session.profile.id);
+  try {
+    const { data: metricsData, error: metricsErr } = await supabase.rpc("get_activity_metrics", {
+      p_from: range.from,
+      p_to: range.to,
+      p_employee: session.profile.role === "sales" ? session.profile.id : null,
+    });
+    if (!metricsErr && metricsData?.[0]) {
+      metrics = {
+        clients_contacted: Number(metricsData[0].clients_contacted || 0),
+        followups_pending: Number(metricsData[0].followups_pending || 0),
+        deals_won: Number(metricsData[0].deals_won || 0),
+        work_seconds: Number(metricsData[0].work_seconds || 0),
+      };
+    }
+  } catch (err) {
+    console.error("Sales dashboard metrics error:", err);
   }
 
-  const { data: recentActivities } = await activityQuery;
+  // Fetch recent client activities for this sales employee
+  let recentActivities: any[] = [];
+  try {
+    let activityQuery = supabase
+      .from("client_activities")
+      .select(`
+        id,
+        contact_date,
+        contact_source,
+        work_status,
+        criteria,
+        follow_up_required,
+        follow_up_at,
+        client:clients (
+          id,
+          person_name,
+          business_name,
+          location,
+          client_number
+        )
+      `)
+      .order("contact_date", { ascending: false })
+      .limit(5);
+
+    if (session.profile.role === "sales") {
+      activityQuery = activityQuery.eq("employee_id", session.profile.id);
+    }
+
+    const { data } = await activityQuery;
+    recentActivities = data || [];
+  } catch (err) {
+    console.error("Sales dashboard activities query error:", err);
+  }
 
   // Fetch upcoming/pending follow-ups
-  let followupQuery = supabase
-    .from("client_activities")
-    .select(`
-      id,
-      follow_up_at,
-      follow_up_notes,
-      work_status,
-      client:clients (
+  let pendingFollowups: any[] = [];
+  try {
+    let followupQuery = supabase
+      .from("client_activities")
+      .select(`
         id,
-        person_name,
-        business_name,
-        client_number
-      )
-    `)
-    .eq("follow_up_required", true)
-    .is("follow_up_completed_at", null)
-    .neq("work_status", "Cancelled")
-    .order("follow_up_at", { ascending: true })
-    .limit(5);
+        follow_up_at,
+        follow_up_notes,
+        work_status,
+        client:clients (
+          id,
+          person_name,
+          business_name,
+          client_number
+        )
+      `)
+      .eq("follow_up_required", true)
+      .is("follow_up_completed_at", null)
+      .neq("work_status", "Cancelled")
+      .order("follow_up_at", { ascending: true })
+      .limit(5);
 
-  if (session.profile.role === "sales") {
-    followupQuery = followupQuery.eq("employee_id", session.profile.id);
+    if (session.profile.role === "sales") {
+      followupQuery = followupQuery.eq("employee_id", session.profile.id);
+    }
+
+    const { data } = await followupQuery;
+    pendingFollowups = data || [];
+  } catch (err) {
+    console.error("Sales dashboard followups query error:", err);
   }
 
-  const { data: pendingFollowups } = await followupQuery;
-
   // Fetch active attendance session
-  const { data: activeSession } = await supabase
-    .from("attendance_sessions")
-    .select("*")
-    .eq("employee_id", session.profile.id)
-    .is("check_out_at", null)
-    .maybeSingle<AttendanceSession>();
+  let activeSession: AttendanceSession | null = null;
+  try {
+    const { data } = await supabase
+      .from("attendance_sessions")
+      .select("*")
+      .eq("employee_id", session.profile.id)
+      .is("check_out_at", null)
+      .maybeSingle<AttendanceSession>();
+    activeSession = data;
+  } catch (err) {
+    console.error("Sales dashboard active session query error:", err);
+  }
 
   return (
     <div>
@@ -182,7 +219,9 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-xs text-ink-subtle">
-                          {new Date(act.contact_date).toLocaleDateString([], { month: "short", day: "numeric" })}
+                          {act.contact_date
+                            ? new Date(act.contact_date).toLocaleDateString("en-GB", { month: "short", day: "numeric" })
+                            : "—"}
                         </span>
                       </div>
                     </div>
@@ -233,7 +272,7 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                       <div className="text-right shrink-0">
                         <span className="text-xs font-medium text-brand-teal">
                           {f.follow_up_at
-                            ? new Date(f.follow_up_at).toLocaleDateString([], {
+                            ? new Date(f.follow_up_at).toLocaleDateString("en-GB", {
                                 month: "short",
                                 day: "numeric",
                                 hour: "2-digit",

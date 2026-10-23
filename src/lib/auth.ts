@@ -18,26 +18,27 @@ export const getSession = cache(async (): Promise<SessionContext | null> => {
     const supabase = await createClient();
     const {
       data: { user },
+      error: userErr,
     } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data: profile } = await supabase
+    if (userErr || !user) return null;
+    const { data: profile, error: profErr } = await supabase
       .from("profiles")
       .select("*")
       .eq("auth_user_id", user.id)
       .maybeSingle<Profile>();
-    if (!profile) return null;
+    if (profErr || !profile) return null;
     return { userId: user.id, profile };
   } catch (e) {
     return null;
   }
 });
 
-/** Page/layout guard. Redirects when not signed in, inactive or not permitted. */
+/** Page/layout guard. Direct redirect to clean destinations. */
 export async function requireRole(roles: AppRole[]): Promise<SessionContext> {
   const session = await getSession();
-  if (!session) redirect("/auth/signout?reason=session");
-  if (!session.profile.is_active) redirect("/auth/signout?reason=inactive");
-  if (!roles.includes(session.profile.role)) redirect("/dashboard?denied=1");
+  if (!session) redirect("/login");
+  if (!session.profile.is_active) redirect("/login?error=inactive");
+  if (!roles.includes(session.profile.role)) redirect(homeFor(session.profile.role));
   return session;
 }
 
