@@ -93,7 +93,6 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     }
   }
 
-  revalidatePath("/", "layout");
   redirect(homeFor(profile.role));
 }
 
