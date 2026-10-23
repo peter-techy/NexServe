@@ -13,6 +13,11 @@ if (!serviceKey) {
 
 const supabase = createClient(supabaseUrl, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
+  global: {
+    headers: {
+      "User-Agent": "NexServe-Backend/1.0",
+    },
+  },
 });
 
 async function main() {
