@@ -14,8 +14,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body className="font-sans">
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-sans" suppressHydrationWarning>
         {children}
         <Toaster position="top-right" closeButton toastOptions={{ className: "text-sm" }} />
       </body>

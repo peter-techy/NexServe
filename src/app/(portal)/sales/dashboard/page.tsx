@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings, DEFAULT_SETTINGS } from "@/lib/settings";
-import { resolveRange } from "@/lib/dates";
+import { resolveRange, formatDate, formatDateTime } from "@/lib/dates";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard, EmptyState } from "@/components/ui/feedback";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
@@ -219,9 +219,7 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-xs text-ink-subtle">
-                          {act.contact_date
-                            ? new Date(act.contact_date).toLocaleDateString("en-GB", { month: "short", day: "numeric" })
-                            : "—"}
+                          {formatDate(act.contact_date, tz)}
                         </span>
                       </div>
                     </div>
@@ -271,14 +269,7 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="text-xs font-medium text-brand-teal">
-                          {f.follow_up_at
-                            ? new Date(f.follow_up_at).toLocaleDateString("en-GB", {
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : "Scheduled"}
+                          {f.follow_up_at ? formatDateTime(f.follow_up_at, tz) : "Scheduled"}
                         </span>
                       </div>
                     </div>

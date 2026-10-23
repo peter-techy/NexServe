@@ -29,17 +29,19 @@ export function secondsToHours(totalSeconds: number | null | undefined): number 
   return Math.round((totalSeconds / 3600) * 100) / 100;
 }
 
-export function firstName(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
+export function firstName(fullName?: string | null): string {
+  if (!fullName || typeof fullName !== "string") return "User";
+  return fullName.trim().split(/\s+/)[0] || "User";
 }
 
-export function initials(fullName: string): string {
-  return fullName
-    .trim()
-    .split(/\s+/)
+export function initials(fullName?: string | null): string {
+  if (!fullName || typeof fullName !== "string") return "NS";
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "NS";
+  return parts
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
+    .join("") || "NS";
 }
 
 /** Escapes characters with special meaning in PostgREST `ilike` / `or` filters. */

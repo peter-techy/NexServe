@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Clock, Play, Square, AlertCircle } from "lucide-react";
+import { Clock, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatClock, formatDuration } from "@/lib/utils";
+import { formatClock } from "@/lib/utils";
 import { checkInAction, checkOutAction } from "@/app/actions/attendance";
 import type { AttendanceSession } from "@/lib/types";
 import { toast } from "sonner";
@@ -19,14 +19,23 @@ export function AttendanceWidget({
 }) {
   const [elapsed, setElapsed] = React.useState<number>(0);
   const [isPending, setIsPending] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    if (!openSession) {
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!openSession?.check_in_at) {
       setElapsed(0);
       return;
     }
 
     const checkInTime = new Date(openSession.check_in_at).getTime();
+    if (Number.isNaN(checkInTime)) {
+      setElapsed(0);
+      return;
+    }
 
     const updateTimer = () => {
       const now = Date.now();
@@ -70,6 +79,17 @@ export function AttendanceWidget({
     }
   };
 
+  const startTimeStr = React.useMemo(() => {
+    if (!openSession?.check_in_at) return "";
+    try {
+      const d = new Date(openSession.check_in_at);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  }, [openSession?.check_in_at]);
+
   if (compact) {
     if (openSession) {
       return (
@@ -79,7 +99,9 @@ export function AttendanceWidget({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-teal opacity-75"></span>
               <span className="relative inline-flex size-2 rounded-full bg-brand-teal"></span>
             </span>
-            <span className="tabular-nums font-mono">{formatClock(elapsed)}</span>
+            <span className="tabular-nums font-mono" suppressHydrationWarning>
+              {mounted ? formatClock(elapsed) : "00:00:00"}
+            </span>
           </div>
           <Button
             size="sm"
@@ -120,11 +142,11 @@ export function AttendanceWidget({
         <div>
           <div className="rounded-md bg-brand-teal-50 border border-brand-teal/20 p-3 text-center mb-3">
             <p className="text-xs text-brand-teal-700 font-medium uppercase tracking-wider">Active Session</p>
-            <div className="text-2xl font-bold font-mono text-brand-navy my-1 tabular-nums">
-              {formatClock(elapsed)}
+            <div className="text-2xl font-bold font-mono text-brand-navy my-1 tabular-nums" suppressHydrationWarning>
+              {mounted ? formatClock(elapsed) : "00:00:00"}
             </div>
-            <p className="text-xs text-ink-muted">
-              Started at {new Date(openSession.check_in_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            <p className="text-xs text-ink-muted" suppressHydrationWarning>
+              {mounted && startTimeStr ? `Started at ${startTimeStr}` : "Active work session"}
             </p>
           </div>
           <Button

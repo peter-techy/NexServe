@@ -57,21 +57,21 @@ function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 }
 
-function SidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNavigate?: () => void }) {
-  const pathname = usePathname();
+function SidebarNav({ groups = [], onNavigate }: { groups?: NavGroup[]; onNavigate?: () => void }) {
+  const pathname = usePathname() || "";
   // Pick the most specific matching href so only one item is active.
-  const allHrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+  const allHrefs = (groups || []).flatMap((g) => (g?.items || []).map((i) => i.href));
   const activeHref = allHrefs.filter((h) => isActive(pathname, h)).sort((a, b) => b.length - a.length)[0];
   return (
     <nav aria-label="Main navigation" className="flex flex-col gap-5 px-3 py-4">
-      {groups.map((group, gi) => (
+      {(groups || []).map((group, gi) => (
         <div key={group.label ?? gi}>
           {group.label && (
             <p className="mb-1.5 px-2.5 text-[11px] font-semibold uppercase tracking-wider text-white/45">{group.label}</p>
           )}
           <ul className="flex flex-col gap-0.5">
-            {group.items.map((item) => {
-              const Icon = ICONS[item.icon];
+            {(group.items || []).map((item) => {
+              const Icon = ICONS[item.icon] || LayoutDashboard;
               const active = item.href === activeHref;
               return (
                 <li key={item.href + item.label}>
@@ -146,13 +146,15 @@ function UserMenu({ user }: { user: ShellUser }) {
             </>
           )}
           <DropdownMenu.Separator className="my-1 h-px bg-line" />
-          <form action={logoutAction}>
-            <DropdownMenu.Item asChild>
-              <button type="submit" className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-sm text-danger outline-none data-[highlighted]:bg-danger-50">
-                <LogOut className="size-4" aria-hidden /> Log out
-              </button>
-            </DropdownMenu.Item>
-          </form>
+          <DropdownMenu.Item
+            className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-sm text-danger outline-none cursor-pointer data-[highlighted]:bg-danger-50"
+            onSelect={async (e) => {
+              e.preventDefault();
+              await logoutAction();
+            }}
+          >
+            <LogOut className="size-4" aria-hidden /> Log out
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -161,21 +163,27 @@ function UserMenu({ user }: { user: ShellUser }) {
 
 export function AppShell({
   user,
-  groups,
-  companyName,
-  openSession,
-  timezone,
+  groups = [],
+  companyName = "NexServe",
+  openSession = null,
+  timezone = "Asia/Kolkata",
   children,
 }: {
-  user: ShellUser;
-  groups: NavGroup[];
-  companyName: string;
-  openSession: AttendanceSession | null;
-  timezone: string;
+  user?: ShellUser | null;
+  groups?: NavGroup[];
+  companyName?: string;
+  openSession?: AttendanceSession | null;
+  timezone?: string;
   children: React.ReactNode;
 }) {
+  const safeUser: ShellUser = {
+    fullName: user?.fullName || "Employee",
+    email: user?.email || "",
+    role: user?.role || "sales",
+    employeeId: user?.employeeId || "",
+  };
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   React.useEffect(() => setMobileOpen(false), [pathname]);
 
   const portal = pathname.startsWith("/admin")
@@ -233,16 +241,16 @@ export function AppShell({
           <LogoMark name={companyName} />
         </span>
         <div className="hidden min-w-0 items-center gap-2 lg:flex">
-          <span className="text-sm font-medium text-ink">Hi, {firstName(user.fullName)}</span>
+          <span className="text-sm font-medium text-ink">Hi, {firstName(safeUser.fullName)}</span>
           <span className="text-line-strong" aria-hidden>
             |
           </span>
           <span className="text-sm text-ink-muted">{portal}</span>
         </div>
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          {user.role === "sales" && <AttendanceWidget openSession={openSession} timezone={timezone} compact />}
-          <RoleBadge role={user.role} className="hidden sm:inline-flex" />
-          <UserMenu user={user} />
+          {safeUser.role === "sales" && <AttendanceWidget openSession={openSession} timezone={timezone} compact />}
+          <RoleBadge role={safeUser.role} className="hidden sm:inline-flex" />
+          <UserMenu user={safeUser} />
         </div>
       </header>
 
