@@ -24,10 +24,10 @@ export function DialogContent({
 }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-brand-navy/30" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0c2448]/30 backdrop-blur-md" />
       <DialogPrimitive.Content
         className={cn(
-          "card fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col shadow-pop focus:outline-none",
+          "card fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col bg-white/85 backdrop-blur-2xl border border-white/70 shadow-[0_24px_60px_rgba(12,36,72,0.18)] focus:outline-none",
           className,
         )}
       >

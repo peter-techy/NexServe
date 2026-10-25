@@ -24,7 +24,15 @@ export function LandingPage({
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#142f4c] selection:bg-[#185fa5]/10">
+    <div className="min-h-screen bg-[#f4f7fb]/70 text-[#142f4c] selection:bg-[#185fa5]/15 relative">
+      {/* Floating ambient glow orbs for authentic public site glassmorphism */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-40 right-10 size-[550px] rounded-full bg-brand-teal/15 blur-3xl" />
+        <div className="absolute top-1/4 -left-40 size-[600px] rounded-full bg-brand-navy/10 blur-3xl" />
+        <div className="absolute top-1/2 right-1/4 size-[550px] rounded-full bg-[#185fa5]/10 blur-3xl" />
+        <div className="absolute top-3/4 -left-20 size-[600px] rounded-full bg-brand-teal/10 blur-3xl" />
+      </div>
+
       <PublicNavbar workspaceHref={workspaceHref} role={role} />
       <main>
         <HeroSection />

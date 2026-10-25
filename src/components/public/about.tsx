@@ -6,8 +6,8 @@ export function AboutSection() {
   return (
     <section id="about" className="px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
-        {/* Left: Logo Showcase Card */}
-        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-[#225789]/20 bg-radial from-white via-[#edf5fd] to-[#f0f6fc] p-10 shadow-xs">
+        {/* Left: Logo Showcase Card with glassmorphism */}
+        <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-white/70 bg-white/75 backdrop-blur-2xl p-10 shadow-[0_20px_50px_rgba(12,36,72,0.06)]">
           <div className="relative h-28 w-72 sm:h-32 sm:w-80">
             <Image
               src="/brand/logo-trimmed.png"

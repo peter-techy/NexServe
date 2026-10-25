@@ -2,7 +2,7 @@ import * as React from "react";
 
 export function PortfolioSection() {
   return (
-    <section id="portfolio" className="border-y border-[#225789]/20 bg-[#f0f6fc] px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
+    <section id="portfolio" className="border-y border-white/50 bg-gradient-to-b from-transparent to-white/40 px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
@@ -18,10 +18,10 @@ export function PortfolioSection() {
           </p>
         </div>
 
-        {/* 3 Project Cards */}
+        {/* 3 Project Cards with glassmorphism */}
         <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {/* Card 1 */}
-          <article className="overflow-hidden rounded-2xl border border-[#225789]/20 bg-white p-4 pt-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <article className="overflow-hidden rounded-2xl border border-white/70 bg-white/75 backdrop-blur-xl p-4 pt-5 shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/90 hover:shadow-[0_16px_40px_rgba(24,120,144,0.12)]">
             <small className="block text-[10px] font-bold tracking-wider text-[#52677e] uppercase">
               01 / BRAND IDENTITY
             </small>
@@ -42,7 +42,7 @@ export function PortfolioSection() {
           </article>
 
           {/* Card 2 */}
-          <article className="overflow-hidden rounded-2xl border border-[#225789]/20 bg-white p-4 pt-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <article className="overflow-hidden rounded-2xl border border-white/70 bg-white/75 backdrop-blur-xl p-4 pt-5 shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/90 hover:shadow-[0_16px_40px_rgba(24,120,144,0.12)]">
             <small className="block text-[10px] font-bold tracking-wider text-[#52677e] uppercase">
               02 / CONTENT CREATION
             </small>
@@ -64,7 +64,7 @@ export function PortfolioSection() {
           </article>
 
           {/* Card 3 */}
-          <article className="overflow-hidden rounded-2xl border border-[#225789]/20 bg-white p-4 pt-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+          <article className="overflow-hidden rounded-2xl border border-white/70 bg-white/75 backdrop-blur-xl p-4 pt-5 shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/90 hover:shadow-[0_16px_40px_rgba(24,120,144,0.12)]">
             <small className="block text-[10px] font-bold tracking-wider text-[#52677e] uppercase">
               03 / DIGITAL EXPERIENCE
             </small>

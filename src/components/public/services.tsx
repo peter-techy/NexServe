@@ -87,7 +87,7 @@ export function ServicesSection({ onSelectService }: { onSelectService?: (servic
   };
 
   return (
-    <section id="services" className="border-t border-[#d7e4f0] bg-gradient-to-b from-white to-[#f0f6fc] px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
+    <section id="services" className="border-t border-white/50 bg-gradient-to-b from-transparent to-white/40 px-6 py-20 sm:px-10 lg:px-16 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
@@ -105,12 +105,12 @@ export function ServicesSection({ onSelectService }: { onSelectService?: (servic
           </p>
         </div>
 
-        {/* 4 Service Cards */}
+        {/* 4 Service Cards with glassmorphism */}
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
           {SERVICES.map((srv) => (
             <article
               key={srv.number}
-              className="group flex flex-col rounded-2xl border border-[#225789]/20 bg-gradient-to-br from-white to-[#f8fbff] p-7 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-[#6398c6] hover:shadow-lg"
+              className="group flex flex-col rounded-2xl border border-white/70 bg-white/70 backdrop-blur-xl p-7 shadow-[0_8px_30px_rgb(0,0,0,0.05)] transition-all duration-300 hover:-translate-y-1 hover:bg-white/90 hover:border-[#185fa5]/40 hover:shadow-[0_16px_40px_rgba(24,120,144,0.12)]"
             >
               <div className="flex items-center justify-between">
                 <span className="flex size-11 items-center justify-center rounded-full border border-[#c3d7eb] bg-[#eaf3fc] text-base font-bold text-[#185fa5]">

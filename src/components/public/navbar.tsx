@@ -15,7 +15,7 @@ export function PublicNavbar({
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
   return (
-    <header className="sticky top-0 z-40 flex min-h-[96px] items-center justify-between border-b border-[#225789]/20 bg-white/95 px-5 backdrop-blur-md sm:px-8 lg:px-12">
+    <header className="sticky top-0 z-40 flex min-h-[96px] items-center justify-between border-b border-white/50 bg-white/75 px-5 backdrop-blur-2xl sm:px-8 lg:px-12 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
       <Link href="#home" className="flex items-center gap-3">
         <div className="relative h-14 w-44 sm:h-16 sm:w-56">
           <Image
@@ -75,7 +75,7 @@ export function PublicNavbar({
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="absolute inset-x-0 top-full flex flex-col border-b border-[#225789]/20 bg-white p-6 shadow-xl md:hidden">
+        <div className="absolute inset-x-0 top-full flex flex-col border-b border-white/60 bg-white/90 backdrop-blur-2xl p-6 shadow-2xl md:hidden">
           <Link
             href="#home"
             className="border-b border-line py-3 text-sm font-medium text-[#334f6d]"

@@ -119,7 +119,7 @@ function UserMenu({ user }: { user: ShellUser }) {
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} className="card z-50 min-w-56 p-1 shadow-pop">
+        <DropdownMenu.Content align="end" sideOffset={6} className="card z-50 min-w-56 p-1 bg-white/85 backdrop-blur-2xl border border-white/60 shadow-[0_16px_40px_rgba(12,36,72,0.14)]">
           <div className="px-2.5 py-2">
             <p className="text-sm font-medium text-ink">{user.fullName}</p>
             <p className="truncate text-xs text-ink-muted">{user.email}</p>
@@ -195,15 +195,22 @@ export function AppShell({
         : "Account";
 
   return (
-    <div className="min-h-dvh lg:pl-64">
+    <div className="min-h-dvh lg:pl-64 relative">
+      {/* Floating ambient glow orbs for authentic glassmorphism */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-32 -right-32 size-96 rounded-full bg-brand-teal/15 blur-3xl" />
+        <div className="absolute top-1/2 -left-32 size-[450px] rounded-full bg-brand-navy/10 blur-3xl" />
+        <div className="absolute -bottom-32 right-1/4 size-[500px] rounded-full bg-brand-teal/10 blur-3xl" />
+      </div>
+
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-sm">
         Skip to content
       </a>
 
-      {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-brand-navy lg:flex">
+      {/* Desktop sidebar with deep glassmorphism */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#0c2448]/90 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_30px_rgba(0,0,0,0.15)] lg:flex">
         <div className="flex h-14 items-center border-b border-white/10 px-5">
-          <span className="rounded bg-white px-2 py-1">
+          <span className="rounded bg-white/95 px-2 py-1 shadow-xs">
             <LogoMark name={companyName} />
           </span>
         </div>
@@ -213,13 +220,13 @@ export function AppShell({
         <div className="border-t border-white/10 px-5 py-3 text-[11px] text-white/45">One Partner. Every Possibility.</div>
       </aside>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer with glassmorphism */}
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
-          <button type="button" aria-label="Close navigation" className="absolute inset-0 bg-brand-navy/40" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-brand-navy">
+          <button type="button" aria-label="Close navigation" className="absolute inset-0 bg-[#0c2448]/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-[#0c2448]/95 backdrop-blur-2xl border-r border-white/15">
             <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
-              <span className="rounded bg-white px-2 py-1">
+              <span className="rounded bg-white/95 px-2 py-1 shadow-xs">
                 <LogoMark name={companyName} />
               </span>
               <Button variant="ghost" size="icon-sm" className="text-white hover:bg-white/10 hover:text-white" aria-label="Close navigation" onClick={() => setMobileOpen(false)}>
@@ -233,7 +240,8 @@ export function AppShell({
         </div>
       )}
 
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-surface px-3 sm:px-5">
+      {/* Frosted glass top header */}
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-white/60 bg-white/75 backdrop-blur-xl px-3 sm:px-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
         <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
           <Menu />
         </Button>

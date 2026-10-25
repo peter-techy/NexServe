@@ -61,12 +61,12 @@ export function ContactSection({ selectedService }: { selectedService?: string }
           </div>
         </div>
 
-        {/* Right Column: Interactive Form */}
+        {/* Right Column: Interactive Form with glassmorphism */}
         <div className="lg:col-span-7">
           <form
             id="contactForm"
             onSubmit={handleSubmit}
-            className="rounded-3xl border border-[#225789]/20 bg-white p-7 shadow-xl sm:p-10"
+            className="rounded-3xl border border-white/70 bg-white/75 backdrop-blur-2xl p-7 shadow-[0_20px_60px_rgba(12,36,72,0.08)] sm:p-10"
           >
             <div className="mb-8">
               <p className="text-[11px] font-bold tracking-widest text-[#185fa5] uppercase">
@@ -113,7 +113,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                   autoComplete="name"
                   placeholder="Your full name"
                   required
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 />
               </div>
 
@@ -128,7 +128,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                   maxLength={150}
                   autoComplete="organization"
                   placeholder="Company name"
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 />
               </div>
             </div>
@@ -147,7 +147,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                   autoComplete="email"
                   placeholder="you@example.com"
                   required
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 />
               </div>
 
@@ -162,7 +162,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                   maxLength={25}
                   autoComplete="tel"
                   placeholder="Contact number"
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 />
               </div>
             </div>
@@ -178,7 +178,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                 value={service}
                 onChange={(e) => setService(e.target.value)}
                 required
-                className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
               >
                 <option value="">Select a service</option>
                 <option value="Reels, Videography & Content Creation">Reels, Videography & Content Creation</option>
@@ -202,7 +202,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                 maxLength={3000}
                 placeholder="Your goals, requirements, ideas and expected deliverables..."
                 required
-                className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
               />
             </div>
 
@@ -215,7 +215,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                 <select
                   id="timeline"
                   name="timeline"
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 >
                   <option value="">Choose if known</option>
                   <option value="As soon as possible">As soon as possible</option>
@@ -234,7 +234,7 @@ export function ContactSection({ selectedService }: { selectedService?: string }
                 <select
                   id="budget"
                   name="budget"
-                  className="w-full rounded-xl border border-[#b7cbde] bg-[#f8fbff] px-3.5 py-3 text-xs text-[#142f4c] transition focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
+                  className="w-full rounded-xl border border-white/70 bg-white/60 backdrop-blur-md px-3.5 py-3 text-xs text-[#142f4c] transition focus:bg-white/95 focus:border-[#185fa5] focus:outline-none focus:ring-2 focus:ring-[#185fa5]/20"
                 >
                   <option value="">Choose if available</option>
                   <option value="Under ₹5,000">Under ₹5,000</option>

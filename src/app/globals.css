@@ -43,7 +43,14 @@
     scroll-padding-top: 100px;
   }
   body {
-    @apply bg-canvas text-ink antialiased;
+    @apply bg-[#f4f7fb] text-ink antialiased min-h-dvh relative selection:bg-brand-teal-50 selection:text-brand-teal-700;
+    background-image:
+      radial-gradient(at 10% 10%, rgba(24, 120, 144, 0.12) 0px, transparent 40%),
+      radial-gradient(at 90% 15%, rgba(12, 36, 72, 0.10) 0px, transparent 40%),
+      radial-gradient(at 50% 50%, rgba(24, 120, 144, 0.05) 0px, transparent 50%),
+      radial-gradient(at 85% 85%, rgba(12, 36, 72, 0.08) 0px, transparent 40%),
+      radial-gradient(at 15% 90%, rgba(24, 120, 144, 0.08) 0px, transparent 40%);
+    background-attachment: fixed;
   }
   :focus-visible {
     outline: 2px solid var(--color-brand-teal);
@@ -55,11 +62,27 @@
 }
 
 @utility card {
-  @apply rounded-md border border-line bg-surface shadow-card;
+  @apply rounded-xl border border-white/60 bg-white/75 backdrop-blur-xl shadow-[0_8px_32px_0_rgba(16,24,40,0.06)] transition-all;
+}
+
+@utility glass {
+  @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_0_rgba(16,24,40,0.06)];
+}
+
+@utility glass-card {
+  @apply rounded-xl bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_0_rgba(16,24,40,0.06)] hover:bg-white/85 hover:border-brand-teal/30 hover:shadow-[0_12px_36px_rgba(24,120,144,0.08)] transition-all;
+}
+
+@utility glass-panel {
+  @apply bg-white/65 backdrop-blur-2xl border border-white/60 shadow-lg;
+}
+
+@utility glass-dark {
+  @apply bg-[#0c2448]/85 backdrop-blur-2xl border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.25)];
 }
 
 @utility field {
-  @apply block w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-subtle transition-colors duration-150 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/20 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-ink-subtle aria-[invalid=true]:border-danger;
+  @apply block w-full rounded-lg border border-white/60 bg-white/65 backdrop-blur-md px-3 py-2 text-sm text-ink placeholder:text-ink-subtle transition-all focus:bg-white/95 focus:border-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal/20 disabled:cursor-not-allowed disabled:bg-canvas/50 disabled:text-ink-subtle aria-[invalid=true]:border-danger;
 }
 
 /* Reference site gradient & keyframe animations */

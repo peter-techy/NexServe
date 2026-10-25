@@ -26,10 +26,10 @@ export function KpiCard({
       {hint && <div className="mt-1 text-xs text-ink-subtle">{hint}</div>}
     </>
   );
-  const base = "card block px-4 py-3.5";
+  const base = "card block px-4 py-3.5 hover:shadow-[0_12px_36px_rgba(24,120,144,0.08)] hover:bg-white/85 transition-all";
   if (href) {
     return (
-      <Link href={href} className={cn(base, "transition-colors duration-150 hover:border-brand-teal/40 hover:bg-brand-teal-50/30")}>
+      <Link href={href} className={cn(base, "hover:border-brand-teal/40 hover:bg-white/90")}>
         {content}
       </Link>
     );

@@ -72,9 +72,16 @@ export default function LoginPage() {
   const activePortal = PORTALS.find((p) => p.id === selectedDept) || PORTALS[0];
 
   return (
-    <div className="flex min-h-dvh flex-col justify-center bg-canvas px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-dvh flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Ambient background glow for authentic glassmorphism */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-32 -right-32 size-[500px] rounded-full bg-brand-teal/20 blur-3xl" />
+        <div className="absolute top-1/2 -left-32 size-[500px] rounded-full bg-brand-navy/15 blur-3xl" />
+        <div className="absolute -bottom-32 right-1/4 size-[500px] rounded-full bg-brand-teal/15 blur-3xl" />
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-block p-2 rounded bg-white shadow-xs mb-4">
+        <div className="inline-block p-2 rounded-xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
           <Logo priority />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-brand-navy">
@@ -86,14 +93,14 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="shadow-pop">
+        <Card className="shadow-[0_20px_60px_rgba(12,36,72,0.12)] border-white/70 bg-white/80 backdrop-blur-2xl">
           <CardBody className="p-6 sm:p-8">
             {/* Separate Portal / Department Switcher */}
             <div className="mb-4">
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink-subtle">
                 Select Portal
               </label>
-              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-canvas p-1.5 border border-line">
+              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white/45 backdrop-blur-md p-1.5 border border-white/60">
                 {PORTALS.map((portal) => {
                   const Icon = portal.icon;
                   const active = selectedDept === portal.id;
@@ -105,8 +112,8 @@ export default function LoginPage() {
                       className={cn(
                         "flex flex-col items-center justify-center gap-1.5 rounded-lg py-2.5 px-2 text-xs font-semibold transition-all",
                         active
-                          ? "bg-white text-brand-navy shadow-sm ring-1 ring-brand-teal/40"
-                          : "text-ink-muted hover:text-ink hover:bg-white/50",
+                          ? "bg-white/95 text-brand-navy shadow-md ring-1 ring-brand-teal/40 backdrop-blur-xl"
+                          : "text-ink-muted hover:text-ink hover:bg-white/60",
                       )}
                     >
                       <Icon

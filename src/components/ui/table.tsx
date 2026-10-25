@@ -16,7 +16,7 @@ export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
     <th
       scope="col"
       className={cn(
-        "border-b border-line bg-canvas/70 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted first:pl-5 last:pr-5",
+        "border-b border-white/60 bg-white/40 backdrop-blur-md px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted first:pl-5 last:pr-5",
         className,
       )}
       {...props}
@@ -25,11 +25,11 @@ export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
 }
 
 export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("border-b border-line px-3 py-2.5 align-top text-ink first:pl-5 last:pr-5", className)} {...props} />;
+  return <td className={cn("border-b border-line/50 px-3 py-2.5 align-top text-ink first:pl-5 last:pr-5", className)} {...props} />;
 }
 
 export function Tr({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors duration-100 hover:bg-canvas/60", className)} {...props} />;
+  return <tr className={cn("transition-colors duration-150 hover:bg-white/50", className)} {...props} />;
 }
 
 /** Builds a URL preserving existing query params. */
