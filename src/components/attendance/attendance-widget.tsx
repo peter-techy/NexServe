@@ -5,6 +5,7 @@ import { Clock, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatClock } from "@/lib/utils";
 import { checkInAction, checkOutAction } from "@/app/actions/attendance";
+import { ShutdownTracker } from "@/components/attendance/shutdown-tracker";
 import type { AttendanceSession } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -94,6 +95,7 @@ export function AttendanceWidget({
     if (openSession) {
       return (
         <div className="flex items-center gap-2">
+          <ShutdownTracker isCheckedIn={true} />
           <div className="flex items-center gap-1.5 rounded bg-brand-teal-50 px-2 py-1 text-xs font-semibold text-brand-teal-700">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-teal opacity-75"></span>
@@ -131,6 +133,7 @@ export function AttendanceWidget({
 
   return (
     <div className="card p-4">
+      <ShutdownTracker isCheckedIn={!!openSession} />
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-ink flex items-center gap-1.5">
           <Clock className="size-4 text-brand-teal" /> Work Session
