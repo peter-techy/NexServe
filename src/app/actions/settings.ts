@@ -51,29 +51,62 @@ export async function updateSettingsAction(prevState: ActionState, formData: For
 }
 
 export async function submitContactFormAction(prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const full_name = (formData.get("full_name") as string)?.trim() || "";
+  const full_name = ((formData.get("name") || formData.get("full_name")) as string)?.trim() || "";
+  const organization = (formData.get("organization") as string)?.trim() || "";
   const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
   const phone = (formData.get("phone") as string)?.trim() || null;
-  const subject = (formData.get("subject") as string)?.trim() || "";
-  const message = (formData.get("message") as string)?.trim() || "";
+  const service = ((formData.get("service") || formData.get("subject")) as string)?.trim() || "General Enquiry";
+  const rawMessage = (formData.get("message") as string)?.trim() || "";
+  const timeline = (formData.get("timeline") as string)?.trim() || "";
+  const budget = (formData.get("budget") as string)?.trim() || "";
+  const consent = formData.get("consent");
 
-  if (!full_name || !email || !subject || !message) {
-    return { ok: false, message: "Please complete all required fields." };
+  if (!full_name || full_name.length < 2) {
+    return { ok: false, message: "Please provide your full name." };
+  }
+  if (!email || !email.includes("@")) {
+    return { ok: false, message: "Please provide a valid email address." };
+  }
+  if (!service) {
+    return { ok: false, message: "Please select the service you are interested in." };
+  }
+  if (!rawMessage || rawMessage.length < 5) {
+    return { ok: false, message: "Please provide a brief description of your project." };
+  }
+  if (!consent && formData.has("consent")) {
+    return { ok: false, message: "Please agree to the enquiry consent." };
   }
 
-  const admin = createAdminClient();
-  const { error } = await admin.from("contact_inquiries").insert({
-    full_name,
-    email,
-    phone,
-    subject,
-    message,
-    status: "new",
-  });
-
-  if (error) {
-    return { ok: false, message: "Failed to submit inquiry. Please try again later." };
+  let fullMessage = rawMessage;
+  const meta: string[] = [];
+  if (organization) meta.push(`Organization: ${organization}`);
+  if (timeline) meta.push(`Timeline: ${timeline}`);
+  if (budget) meta.push(`Budget: ${budget}`);
+  if (meta.length > 0) {
+    fullMessage += `\n\n--- Project Details ---\n${meta.join("\n")}`;
   }
 
-  return { ok: true, message: "Thank you for reaching out. Our team will review your message shortly." };
+  const subject = organization ? `[${organization}] ${service}` : service;
+
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.from("contact_inquiries").insert({
+      full_name: full_name.slice(0, 120),
+      email: email.slice(0, 200),
+      phone: phone ? phone.slice(0, 30) : null,
+      subject: subject.slice(0, 160),
+      message: fullMessage.slice(0, 5000),
+      status: "new",
+    });
+
+    if (error) {
+      console.error("[inquiry] error saving inquiry:", error);
+      return { ok: false, message: "Failed to submit enquiry. Please try again." };
+    }
+
+    return { ok: true, message: "Thank you! Your enquiry has been sent to NexServe." };
+  } catch (err) {
+    console.error("[inquiry] unexpected error:", err);
+    return { ok: false, message: "Failed to submit enquiry. Please try again." };
+  }
 }
