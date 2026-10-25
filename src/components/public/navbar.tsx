@@ -47,21 +47,12 @@ export function PublicNavbar({
       </nav>
 
       <div className="hidden items-center gap-3 md:flex">
-        {workspaceHref ? (
-          <Link
-            href={workspaceHref}
-            className="flex items-center gap-1.5 rounded-full bg-[#185fa5]/10 px-4 py-2 text-xs font-semibold text-[#185fa5] transition hover:bg-[#185fa5]/20"
-          >
-            <ShieldCheck className="size-3.5" /> Workspace {role ? `(${role})` : ""}
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="flex items-center gap-1 rounded-full border border-line-strong px-3.5 py-1.5 text-xs font-medium text-ink-muted transition hover:border-[#185fa5] hover:text-[#185fa5]"
-          >
-            <LogIn className="size-3" /> Employee Portal
-          </Link>
-        )}
+        <Link
+          href={workspaceHref || "/login"}
+          className="flex items-center gap-1.5 rounded-full bg-[#185fa5]/10 px-4 py-2 text-xs font-semibold text-[#185fa5] transition hover:bg-[#185fa5]/20"
+        >
+          <ShieldCheck className="size-3.5" /> Workspace
+        </Link>
 
         <Link
           href="#contact"
@@ -122,23 +113,13 @@ export function PublicNavbar({
           </Link>
 
           <div className="mt-4 flex flex-col gap-2.5 pt-2">
-            {workspaceHref ? (
-              <Link
-                href={workspaceHref}
-                className="flex items-center justify-center gap-1.5 rounded-lg bg-[#185fa5] py-2.5 text-xs font-semibold text-white"
-                onClick={() => setMobileOpen(false)}
-              >
-                <ShieldCheck className="size-4" /> Go to Workspace
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center justify-center gap-1.5 rounded-lg border border-line-strong py-2.5 text-xs font-semibold text-ink"
-                onClick={() => setMobileOpen(false)}
-              >
-                <LogIn className="size-4" /> Employee Portal Login
-              </Link>
-            )}
+            <Link
+              href={workspaceHref || "/login"}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-[#185fa5] py-2.5 text-xs font-semibold text-white"
+              onClick={() => setMobileOpen(false)}
+            >
+              <ShieldCheck className="size-4" /> Workspace
+            </Link>
 
             <Link
               href="#contact"

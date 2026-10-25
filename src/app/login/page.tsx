@@ -1,20 +1,75 @@
 "use client";
 
 import * as React from "react";
-import { useActionState } from "react";
+import { useActionState, useState, useEffect } from "react";
 import Link from "next/link";
+import { Briefcase, Users, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Card, CardBody } from "@/components/ui/card";
-import { Field, Input, Select, Checkbox } from "@/components/ui/form";
+import { Field, Input, Checkbox } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Alert } from "@/components/ui/feedback";
 import { loginAction } from "@/app/actions/auth";
+import { cn } from "@/lib/utils";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
 
+type PortalKey = "Sales" | "HR" | "Administration";
+
+const PORTALS = [
+  {
+    id: "Sales" as PortalKey,
+    label: "Sales",
+    icon: Briefcase,
+    hint: "Pipeline, client entries & follow-ups",
+    placeholder: "sales@nexserve.com",
+  },
+  {
+    id: "HR" as PortalKey,
+    label: "HR",
+    icon: Users,
+    hint: "Workforce directory & Excel reporting",
+    placeholder: "hr@nexserve.com",
+  },
+  {
+    id: "Administration" as PortalKey,
+    label: "Super Admin",
+    icon: ShieldCheck,
+    hint: "Full administration, cross-portal oversight",
+    placeholder: "admin@nexserve.com",
+  },
+];
+
 export default function LoginPage() {
   const [state, formAction] = useActionState(loginAction, initialState);
+  const [selectedDept, setSelectedDept] = useState<PortalKey>("Sales");
+
+  useEffect(() => {
+    // Check URL query parameters for default portal
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const portalParam = (params.get("portal") || params.get("role") || "").toLowerCase();
+      if (portalParam.includes("admin")) {
+        setSelectedDept("Administration");
+      } else if (portalParam.includes("hr")) {
+        setSelectedDept("HR");
+      } else if (portalParam.includes("sale")) {
+        setSelectedDept("Sales");
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state?.values?.department) {
+      const d = state.values.department as string;
+      if (d === "Administration" || d === "Super Admin") setSelectedDept("Administration");
+      else if (d === "HR") setSelectedDept("HR");
+      else if (d === "Sales") setSelectedDept("Sales");
+    }
+  }, [state?.values?.department]);
+
+  const activePortal = PORTALS.find((p) => p.id === selectedDept) || PORTALS[0];
 
   return (
     <div className="flex min-h-dvh flex-col justify-center bg-canvas px-4 py-12 sm:px-6 lg:px-8">
@@ -26,29 +81,56 @@ export default function LoginPage() {
           Corporate Management Portal
         </h2>
         <p className="mt-1 text-sm text-ink-muted">
-          Sign in to access your departmental workspace
+          Sign in to access your designated workspace
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="shadow-pop">
           <CardBody className="p-6 sm:p-8">
+            {/* Separate Portal / Department Switcher */}
+            <div className="mb-4">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink-subtle">
+                Select Portal
+              </label>
+              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-canvas p-1.5 border border-line">
+                {PORTALS.map((portal) => {
+                  const Icon = portal.icon;
+                  const active = selectedDept === portal.id;
+                  return (
+                    <button
+                      key={portal.id}
+                      type="button"
+                      onClick={() => setSelectedDept(portal.id)}
+                      className={cn(
+                        "flex flex-col items-center justify-center gap-1.5 rounded-lg py-2.5 px-2 text-xs font-semibold transition-all",
+                        active
+                          ? "bg-white text-brand-navy shadow-sm ring-1 ring-brand-teal/40"
+                          : "text-ink-muted hover:text-ink hover:bg-white/50",
+                      )}
+                    >
+                      <Icon
+                        className={cn(
+                          "size-4 transition-colors",
+                          active ? "text-brand-teal" : "text-ink-subtle",
+                        )}
+                      />
+                      <span>{portal.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-center text-xs text-ink-subtle">
+                {activePortal.hint}
+              </p>
+            </div>
+
             <form action={formAction} className="space-y-4">
+              <input type="hidden" name="department" value={selectedDept} />
+
               {state?.message && !state.ok && (
                 <Alert tone="danger">{state.message}</Alert>
               )}
-
-              <Field label="Department" htmlFor="department" required>
-                <Select
-                  id="department"
-                  name="department"
-                  defaultValue={state?.values?.department as string || "Sales"}
-                  required
-                >
-                  <option value="Sales">Sales</option>
-                  <option value="HR">HR</option>
-                </Select>
-              </Field>
 
               <Field label="Corporate Email" htmlFor="email" required>
                 <Input
@@ -56,8 +138,8 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="name@nexserve.com"
-                  defaultValue={state?.values?.email as string || ""}
+                  placeholder={activePortal.placeholder}
+                  defaultValue={(state?.values?.email as string) || ""}
                   required
                 />
               </Field>
@@ -91,7 +173,7 @@ export default function LoginPage() {
                   className="w-full"
                   pendingText="Signing in…"
                 >
-                  Sign In
+                  Sign in to {activePortal.label}
                 </SubmitButton>
               </div>
             </form>

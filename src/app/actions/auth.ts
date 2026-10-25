@@ -21,7 +21,11 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     };
   }
 
-  const department = (formData.get("department") as Department) || "";
+  const rawDept = (formData.get("department") as string)?.trim() || "";
+  const department: Department =
+    rawDept === "Super Admin" || rawDept === "super_admin" || rawDept === "Superadmin"
+      ? "Administration"
+      : (rawDept as Department);
   const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
   const password = (formData.get("password") as string) || "";
   const remember = formData.get("remember") === "on";
@@ -30,7 +34,7 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     return {
       ok: false,
       message: "Please fill in all required fields.",
-      values: { department, email },
+      values: { department: rawDept || "Sales", email },
     };
   }
 
@@ -52,7 +56,7 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     return {
       ok: false,
       message: "Invalid email or password.",
-      values: { department, email },
+      values: { department: rawDept, email },
     };
   }
 
@@ -79,18 +83,35 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     };
   }
 
-  // Validate department selection
-  // Super admin can select either HR or Sales (or Administration).
-  // HR can only select HR. Sales can only select Sales.
-  if (profile.role !== "super_admin") {
-    if (profile.department !== department) {
-      await supabase.auth.signOut();
-      return {
-        ok: false,
-        message: `Your account is registered under the ${profile.department} department. You cannot log in as ${department}.`,
-        values: { department, email },
-      };
+  // Validate department selection & route appropriately
+  if (profile.role === "super_admin") {
+    revalidatePath("/", "layout");
+    if (department === "HR") {
+      redirect("/hr/dashboard");
+    } else if (department === "Sales") {
+      redirect("/sales/dashboard");
+    } else {
+      redirect("/admin/dashboard");
     }
+  }
+
+  // Non-super-admin validation
+  if (department === "Administration") {
+    await supabase.auth.signOut();
+    return {
+      ok: false,
+      message: `Account '${email}' is registered under ${profile.department} and does not have Super Admin privileges. Please select the ${profile.department} tab to sign in.`,
+      values: { department: profile.department, email },
+    };
+  }
+
+  if (profile.department !== department) {
+    await supabase.auth.signOut();
+    return {
+      ok: false,
+      message: `Your account is registered under the ${profile.department} department. You cannot log in as ${department}.`,
+      values: { department: profile.department, email },
+    };
   }
 
   revalidatePath("/", "layout");
