@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       client_review,
       work_status,
       criteria,
-      employee:profiles!inner (
+      employee:profiles!client_activities_employee_id_fkey (
         id,
         employee_id,
         full_name,

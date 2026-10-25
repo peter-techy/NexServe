@@ -9,6 +9,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AttendanceWidget } from "@/components/attendance/attendance-widget";
+import { CompleteFollowupButton } from "@/components/followups/complete-followup-button";
 import { formatDuration } from "@/lib/utils";
 import { Users, Clock, CheckCircle2, CalendarClock, Plus, ArrowRight } from "lucide-react";
 import type { AttendanceSession, WorkStatus } from "@/lib/types";
@@ -267,10 +268,17 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                           </p>
                         )}
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="flex flex-col items-end gap-2 shrink-0">
                         <span className="text-xs font-medium text-brand-teal">
                           {f.follow_up_at ? formatDateTime(f.follow_up_at, tz) : "Scheduled"}
                         </span>
+                        <CompleteFollowupButton
+                          activityId={f.id}
+                          clientName={f.client?.business_name}
+                          outcomeStatus="Done"
+                          size="sm"
+                          variant="secondary"
+                        />
                       </div>
                     </div>
                   ))}

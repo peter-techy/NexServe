@@ -228,3 +228,41 @@ export async function archiveClientAction(clientId: string): Promise<ActionState
   revalidatePath("/sales/clients");
   return { ok: true, message: "Client successfully archived." };
 }
+
+export async function completeFollowupAction(activityId: string, outcomeStatus: WorkStatus = "Done"): Promise<ActionState> {
+  const session = await authorize(["sales", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  if (!activityId) {
+    return { ok: false, message: "Activity ID is required." };
+  }
+
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("client_activities")
+    .update({
+      follow_up_completed_at: new Date().toISOString(),
+      work_status: outcomeStatus,
+      deal_outcome: outcomeStatus === "Done" ? "won" : null,
+      updated_by: session.profile.id,
+    })
+    .eq("id", activityId);
+
+  if (session.profile.role === "sales") {
+    query = query.eq("employee_id", session.profile.id);
+  }
+
+  const { error } = await query;
+
+  if (error) {
+    return { ok: false, message: error.message || "Failed to complete follow-up." };
+  }
+
+  revalidatePath("/sales/follow-ups");
+  revalidatePath("/sales/dashboard");
+  revalidatePath("/sales/clients");
+  return { ok: true, message: "Follow-up marked as completed." };
+}

@@ -36,7 +36,7 @@ export default async function HREmployeeActivityPage({ searchParams }: Props) {
       criteria,
       criteria_description,
       client_review,
-      employee:profiles (
+      employee:profiles!client_activities_employee_id_fkey (
         id,
         full_name,
         employee_id

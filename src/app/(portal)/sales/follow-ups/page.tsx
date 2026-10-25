@@ -2,12 +2,13 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardBody } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/feedback";
-import { Eye, CheckCircle2 } from "lucide-react";
+import { CompleteFollowupButton } from "@/components/followups/complete-followup-button";
+import { Eye } from "lucide-react";
 import type { WorkStatus } from "@/lib/types";
 
 export default async function SalesFollowupsPage() {
@@ -59,7 +60,7 @@ export default async function SalesFollowupsPage() {
                 <Th>Client Number</Th>
                 <Th>Work Status</Th>
                 <Th>Follow-up Objective</Th>
-                <Th className="text-right">Action</Th>
+                <Th className="text-right">Actions</Th>
               </Tr>
             </thead>
             <tbody>
@@ -91,11 +92,18 @@ export default async function SalesFollowupsPage() {
                         {f.follow_up_notes || "—"}
                       </Td>
                       <Td className="text-right">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/sales/clients/${f.id}`}>
-                            <Eye className="size-3.5 mr-1" /> View / Complete
-                          </Link>
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <CompleteFollowupButton
+                            activityId={f.id}
+                            clientName={f.client?.business_name}
+                            outcomeStatus="Done"
+                          />
+                          <Button asChild variant="ghost" size="sm" className="text-xs">
+                            <Link href={`/sales/clients/${f.id}`}>
+                              <Eye className="size-3.5 mr-1" /> View Details
+                            </Link>
+                          </Button>
+                        </div>
                       </Td>
                     </Tr>
                   );
