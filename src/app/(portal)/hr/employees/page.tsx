@@ -6,6 +6,7 @@ import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { RoleBadge, ActiveBadge } from "@/components/ui/badge";
 import { Input, Select } from "@/components/ui/form";
 import { EmptyState } from "@/components/ui/feedback";
+import { FileSpreadsheet } from "lucide-react";
 import type { AppRole } from "@/lib/types";
 
 interface Props {
@@ -39,6 +40,16 @@ export default async function HREmployeesPage({ searchParams }: Props) {
       <PageHeader
         title="Employee Directory"
         description="View corporate employee records, assignments, and roles"
+        actions={
+          <a
+            href="/api/reports/excel"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/80 dark:bg-slate-900/80 hover:bg-white text-brand-navy dark:text-slate-200 border border-slate-200/80 dark:border-slate-800 shadow-sm transition backdrop-blur-md"
+            download
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Download Excel (.xlsx)</span>
+          </a>
+        }
       />
 
       <Card className="mb-6">

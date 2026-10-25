@@ -144,9 +144,123 @@ export async function toggleEmployeeStatusAction(profileId: string, currentStatu
     return { ok: false, message: error.message };
   }
 
-  await writeAudit(session.profile.id, nextStatus ? "employee.activate" : "employee.deactivate", "profiles", profileId);
+  // Update Supabase Auth user ban status so deactivated users cannot log in
+  const { data: prof } = await admin
+    .from("profiles")
+    .select("auth_user_id")
+    .eq("id", profileId)
+    .single();
+
+  if (prof?.auth_user_id) {
+    try {
+      await admin.auth.admin.updateUserById(prof.auth_user_id, {
+        ban_duration: nextStatus ? "none" : "876600h",
+      });
+    } catch (authErr) {
+      console.warn("Could not toggle auth ban status:", authErr);
+    }
+  }
+
+  await writeAudit(
+    session.profile.id,
+    nextStatus ? "employee.activate" : "employee.deactivate",
+    "profiles",
+    profileId
+  );
 
   revalidatePath("/admin/users");
   revalidatePath("/hr/employees");
+  revalidatePath("/hr/reports");
   return { ok: true, message: `Account ${nextStatus ? "activated" : "deactivated"} successfully.` };
+}
+
+export async function deleteEmployeeAction(profileId: string): Promise<ActionState> {
+  const session = await authorize(["super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized. Super Admin access required." };
+  }
+
+  if (session.profile.id === profileId) {
+    return { ok: false, message: "You cannot delete your own Super Admin account." };
+  }
+
+  const admin = createAdminClient();
+
+  // 1. Fetch profile to get auth_user_id, employee_id, full_name, role
+  const { data: targetProfile, error: fetchErr } = await admin
+    .from("profiles")
+    .select("id, auth_user_id, employee_id, full_name, role")
+    .eq("id", profileId)
+    .single();
+
+  if (fetchErr || !targetProfile) {
+    return { ok: false, message: "Employee profile not found." };
+  }
+
+  // Protect system if target is the sole active super admin
+  if (targetProfile.role === "super_admin") {
+    const { count } = await admin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "super_admin")
+      .eq("is_active", true);
+
+    if ((count || 0) <= 1) {
+      return { ok: false, message: "Cannot delete the sole active Super Admin." };
+    }
+  }
+
+  try {
+    // 2. Disassociate foreign key dependencies safely to avoid Postgres FK violations
+    await admin.from("app_settings").update({ updated_by: null }).eq("updated_by", profileId);
+    await admin.from("activity_status_history").update({ changed_by: null }).eq("changed_by", profileId);
+    await admin.from("audit_logs").update({ actor_user_id: null }).eq("actor_user_id", profileId);
+    await admin.from("attendance_sessions").delete().eq("employee_id", profileId);
+
+    // Reassign clients to current acting Super Admin so records remain preserved
+    await admin.from("clients").update({ created_by: session.profile.id }).eq("created_by", profileId);
+    await admin.from("clients").update({ assigned_to: session.profile.id }).eq("assigned_to", profileId);
+    await admin.from("clients").update({ archived_by: session.profile.id }).eq("archived_by", profileId);
+
+    // Reassign client activities to current acting Super Admin
+    await admin.from("client_activities").update({ employee_id: session.profile.id }).eq("employee_id", profileId);
+    await admin.from("client_activities").update({ updated_by: session.profile.id }).eq("updated_by", profileId);
+
+    // 3. Delete from profiles table
+    const { error: deleteProfileErr } = await admin
+      .from("profiles")
+      .delete()
+      .eq("id", profileId);
+
+    if (deleteProfileErr) {
+      return { ok: false, message: deleteProfileErr.message || "Failed to delete employee profile." };
+    }
+
+    // 4. Delete from Supabase Auth
+    if (targetProfile.auth_user_id) {
+      try {
+        await admin.auth.admin.deleteUser(targetProfile.auth_user_id);
+      } catch (authDelErr) {
+        console.warn("Could not delete auth user:", authDelErr);
+      }
+    }
+
+    // 5. Audit log
+    await writeAudit(session.profile.id, "employee.delete", "profiles", profileId, {
+      deleted_employee_id: targetProfile.employee_id,
+      deleted_full_name: targetProfile.full_name,
+      deleted_role: targetProfile.role,
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath("/hr/employees");
+    revalidatePath("/hr/reports");
+
+    return {
+      ok: true,
+      message: `Employee ${targetProfile.full_name} (${targetProfile.employee_id}) was permanently deleted.`,
+    };
+  } catch (err: any) {
+    return { ok: false, message: err?.message || "An error occurred while deleting the employee." };
+  }
 }
