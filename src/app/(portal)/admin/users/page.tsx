@@ -1,12 +1,11 @@
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardHeader, CardBody } from "@/components/ui/card";
+import { Card, CardHeader } from "@/components/ui/card";
 import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { RoleBadge, ActiveBadge } from "@/components/ui/badge";
-import { Field, Input, Select } from "@/components/ui/form";
-import { SubmitButton } from "@/components/ui/submit-button";
-import { createEmployeeAction, toggleEmployeeStatusAction } from "@/app/actions/admin";
+import { CreateEmployeeForm } from "@/components/admin/create-employee-form";
+import { toggleEmployeeStatusAction } from "@/app/actions/admin";
 import type { AppRole } from "@/lib/types";
 
 export default async function AdminUsersPage() {
@@ -28,59 +27,7 @@ export default async function AdminUsersPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Account Provisioning Form */}
         <div className="lg:col-span-1">
-          <Card>
-            <CardHeader
-              title="Create Employee Account"
-              description="Add a new member to HR or Sales"
-            />
-            <CardBody className="p-4">
-              <form action={createEmployeeAction as any} className="space-y-3">
-                <Field label="Employee ID" htmlFor="employee_id" required>
-                  <Input id="employee_id" name="employee_id" placeholder="e.g. EMP-010" required />
-                </Field>
-
-                <Field label="Full Name" htmlFor="full_name" required>
-                  <Input id="full_name" name="full_name" placeholder="e.g. Sarah Miller" required />
-                </Field>
-
-                <Field label="Work Email" htmlFor="email" required>
-                  <Input id="email" name="email" type="email" placeholder="name@nexserve.com" required />
-                </Field>
-
-                <Field label="Contact Phone" htmlFor="phone">
-                  <Input id="phone" name="phone" placeholder="+91 98765 00000" />
-                </Field>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Department" htmlFor="department" required>
-                    <Select id="department" name="department" defaultValue="Sales" required>
-                      <option value="Sales">Sales</option>
-                      <option value="HR">HR</option>
-                      <option value="Administration">Administration</option>
-                    </Select>
-                  </Field>
-
-                  <Field label="Role" htmlFor="role" required>
-                    <Select id="role" name="role" defaultValue="sales" required>
-                      <option value="sales">Sales</option>
-                      <option value="hr">HR</option>
-                      <option value="super_admin">Super Admin</option>
-                    </Select>
-                  </Field>
-                </div>
-
-                <Field label="Temporary Password" htmlFor="password" required>
-                  <Input id="password" name="password" defaultValue="NexServe@2026" required />
-                </Field>
-
-                <div className="pt-2">
-                  <SubmitButton className="w-full" pendingText="Provisioning Account…">
-                    Provision Account
-                  </SubmitButton>
-                </div>
-              </form>
-            </CardBody>
-          </Card>
+          <CreateEmployeeForm />
         </div>
 
         {/* Existing Accounts Table */}
