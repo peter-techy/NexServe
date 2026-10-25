@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AttendanceWidget } from "@/components/attendance/attendance-widget";
 import { CompleteFollowupButton } from "@/components/followups/complete-followup-button";
+import { ForwardDealButton } from "@/components/deals/forward-deal-button";
 import { formatDuration } from "@/lib/utils";
 import { Users, Clock, CheckCircle2, CalendarClock, Plus, ArrowRight } from "lucide-react";
 import type { AttendanceSession, WorkStatus } from "@/lib/types";
@@ -71,6 +72,7 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
         contact_source,
         work_status,
         criteria,
+        notes,
         follow_up_required,
         follow_up_at,
         client:clients (
@@ -218,7 +220,14 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                           {act.client?.person_name} · {act.contact_source}
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
+                      <div className="flex items-center gap-2 shrink-0">
+                        <ForwardDealButton
+                          activityId={act.id}
+                          businessName={act.client?.business_name || ""}
+                          personName={act.client?.person_name}
+                          isForwarded={act.notes?.includes("[FORWARDED TO HR")}
+                          isDone={act.work_status === "Done"}
+                        />
                         <span className="text-xs text-ink-subtle">
                           {formatDate(act.contact_date, tz)}
                         </span>

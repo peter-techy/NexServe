@@ -266,3 +266,139 @@ export async function completeFollowupAction(activityId: string, outcomeStatus: 
   revalidatePath("/sales/clients");
   return { ok: true, message: "Follow-up marked as completed." };
 }
+
+export async function forwardDealToHrAction(activityId: string, handoverNotes?: string): Promise<ActionState> {
+  const session = await authorize(["sales", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  if (!activityId) {
+    return { ok: false, message: "Activity ID is required." };
+  }
+
+  const supabase = await createClient();
+
+  // 1. Fetch current activity with client info
+  const { data: activity, error: fetchErr } = await supabase
+    .from("client_activities")
+    .select(`
+      id,
+      notes,
+      criteria,
+      criteria_description,
+      client:clients (
+        id,
+        person_name,
+        business_name,
+        location,
+        client_number
+      )
+    `)
+    .eq("id", activityId)
+    .single();
+
+  if (fetchErr || !activity) {
+    return { ok: false, message: "Activity record not found." };
+  }
+
+  const client = (activity as any).client;
+  const existingNotes = activity.notes || "";
+  const forwardStamp = `[FORWARDED TO HR on ${new Date().toLocaleDateString()}: ${handoverNotes || "Deal Done. Handed over to HR."}]`;
+  const updatedNotes = existingNotes ? `${existingNotes}\n\n${forwardStamp}` : forwardStamp;
+
+  // 2. Mark work_status = 'Done', deal_outcome = 'won', and append forward stamp
+  const { error: updateErr } = await supabase
+    .from("client_activities")
+    .update({
+      work_status: "Done",
+      deal_outcome: "won",
+      notes: updatedNotes,
+      updated_by: session.profile.id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", activityId);
+
+  if (updateErr) {
+    return { ok: false, message: updateErr.message || "Failed to update activity status." };
+  }
+
+  // 3. Log formal handover in audit_logs for HR and Super Admin inspection
+  const { error: auditErr } = await supabase
+    .from("audit_logs")
+    .insert({
+      actor_user_id: session.profile.id,
+      action: "deal.forwarded_to_hr",
+      entity_type: "client_activity",
+      entity_id: activityId,
+      metadata: {
+        client_id: client?.id,
+        client_name: client?.person_name,
+        business_name: client?.business_name,
+        contact_number: client?.client_number,
+        location: client?.location,
+        criteria: activity.criteria,
+        criteria_description: activity.criteria_description,
+        sales_rep_id: session.profile.id,
+        sales_rep_name: session.profile.full_name,
+        sales_rep_email: session.profile.email,
+        handover_notes: handoverNotes || "Deal successfully closed. Handed over to HR for contract, onboarding & compliance.",
+        status: "pending_hr_review",
+        forwarded_at: new Date().toISOString(),
+      },
+    });
+
+  if (auditErr) {
+    console.error("Audit log error for deal handover:", auditErr);
+  }
+
+  revalidatePath("/sales/clients");
+  revalidatePath("/sales/dashboard");
+  revalidatePath("/hr/deals");
+  revalidatePath("/hr/activity");
+  return { ok: true, message: "Deal marked as Done and successfully forwarded to HR!" };
+}
+
+export async function updateDealHandoverStatusAction(
+  logId: number,
+  status: "acknowledged" | "contract_sent" | "onboarded" | "cancelled",
+  hrNote?: string
+): Promise<ActionState> {
+  const session = await authorize(["hr", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized. HR credentials required." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: log, error: fetchErr } = await supabase
+    .from("audit_logs")
+    .select("metadata")
+    .eq("id", logId)
+    .single();
+
+  if (fetchErr || !log) {
+    return { ok: false, message: "Handover record not found." };
+  }
+
+  const existingMeta = (log.metadata as Record<string, any>) || {};
+  const updatedMeta = {
+    ...existingMeta,
+    status,
+    hr_note: hrNote || existingMeta.hr_note || null,
+    hr_handled_by: session.profile.full_name,
+    hr_updated_at: new Date().toISOString(),
+  };
+
+  const { error: updateErr } = await supabase
+    .from("audit_logs")
+    .update({ metadata: updatedMeta })
+    .eq("id", logId);
+
+  if (updateErr) {
+    return { ok: false, message: "Failed to update handover status." };
+  }
+
+  revalidatePath("/hr/deals");
+  return { ok: true, message: `Deal handover status updated to ${status}.` };
+}

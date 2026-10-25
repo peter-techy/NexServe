@@ -26,6 +26,7 @@ import { LogoMark } from "@/components/brand/logo";
 import { RoleBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AttendanceWidget } from "@/components/attendance/attendance-widget";
+import { ReportBugModal } from "@/components/bugs/report-bug-modal";
 import { logoutAction } from "@/app/actions/auth";
 import type { NavGroup, NavIcon } from "@/lib/navigation";
 import type { AppRole, AttendanceSession } from "@/lib/types";
@@ -257,6 +258,7 @@ export function AppShell({
         </div>
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {safeUser.role === "sales" && <AttendanceWidget openSession={openSession} timezone={timezone} compact />}
+          <ReportBugModal userEmail={safeUser.email} userName={safeUser.fullName} userRole={safeUser.role} />
           <RoleBadge role={safeUser.role} className="hidden sm:inline-flex" />
           <UserMenu user={safeUser} />
         </div>

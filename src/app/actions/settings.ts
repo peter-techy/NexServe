@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { authorize } from "@/lib/auth";
+import { authorize, getSession } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import type { ActionState } from "@/lib/types";
 
@@ -109,4 +109,113 @@ export async function submitContactFormAction(prevState: ActionState, formData: 
     console.error("[inquiry] unexpected error:", err);
     return { ok: false, message: "Failed to submit enquiry. Please try again." };
   }
+}
+
+export async function updateInquiryStatusAction(
+  inquiryId: string,
+  newStatus: "new" | "in_review" | "resolved" | "spam"
+): Promise<ActionState> {
+  const session = await getSession();
+  if (!session || (session.profile.role !== "super_admin" && session.profile.role !== "hr")) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("contact_inquiries")
+    .update({ status: newStatus, updated_at: new Date().toISOString() })
+    .eq("id", inquiryId);
+
+  if (error) {
+    return { ok: false, message: error.message || "Failed to update inquiry status." };
+  }
+
+  revalidatePath("/admin/inquiries");
+  return { ok: true, message: `Inquiry marked as ${newStatus.replace("_", " ")}.` };
+}
+
+export async function convertInquiryToClientAction(inquiryId: string): Promise<ActionState> {
+  const session = await getSession();
+  if (!session || (session.profile.role !== "super_admin" && session.profile.role !== "hr" && session.profile.role !== "sales")) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  const admin = createAdminClient();
+
+  // 1. Fetch inquiry
+  const { data: inq, error: fetchErr } = await admin
+    .from("contact_inquiries")
+    .select("*")
+    .eq("id", inquiryId)
+    .single();
+
+  if (fetchErr || !inq) {
+    return { ok: false, message: "Inquiry not found." };
+  }
+
+  // 2. Pick a sales rep to assign (current user if sales, otherwise pick active sales rep)
+  let salesRepId = session.profile.id;
+  if (session.profile.role !== "sales") {
+    const { data: salesUser } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("role", "sales")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (salesUser) {
+      salesRepId = salesUser.id;
+    }
+  }
+
+  // 3. Extract business name from subject or default
+  let businessName = inq.full_name + " Business";
+  const orgMatch = inq.subject.match(/\[(.*?)\]/);
+  if (orgMatch && orgMatch[1]) {
+    businessName = orgMatch[1];
+  }
+
+  // 4. Create client entry
+  const { data: client, error: clientErr } = await admin
+    .from("clients")
+    .insert({
+      person_name: inq.full_name,
+      business_name: businessName,
+      location: "India / Inbound",
+      client_number: inq.phone || null,
+      created_by: session.profile.id,
+      assigned_to: salesRepId,
+    })
+    .select("id")
+    .single();
+
+  if (clientErr || !client) {
+    return { ok: false, message: clientErr?.message || "Failed to convert inquiry to client." };
+  }
+
+  // 5. Create initial activity record in sales pipeline
+  await admin.from("client_activities").insert({
+    client_id: client.id,
+    employee_id: salesRepId,
+    contact_source: "Website",
+    client_review: `Inbound website enquiry: ${inq.subject}. Message: ${inq.message.slice(0, 300)}`,
+    work_status: "Followup",
+    criteria: ["Digital Marketing"],
+    criteria_description: inq.subject,
+    follow_up_required: true,
+    follow_up_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    follow_up_notes: "Initial outreach for website enquiry.",
+  });
+
+  // 6. Mark inquiry as resolved
+  await admin
+    .from("contact_inquiries")
+    .update({ status: "resolved", updated_at: new Date().toISOString() })
+    .eq("id", inquiryId);
+
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/sales/clients");
+  revalidatePath("/sales/follow-ups");
+  return { ok: true, message: `Inquiry successfully converted to client '${businessName}' in Sales pipeline!` };
 }

@@ -8,6 +8,7 @@ import { Input, Select } from "@/components/ui/form";
 import { Table, TableWrap, Th, Td, Tr, Pagination } from "@/components/ui/table";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
+import { ForwardDealButton } from "@/components/deals/forward-deal-button";
 import { Plus, Search, Filter, Eye } from "lucide-react";
 import type { WorkStatus } from "@/lib/types";
 
@@ -40,6 +41,7 @@ export default async function SalesClientsPage({ searchParams }: Props) {
       contact_source,
       work_status,
       criteria,
+      notes,
       follow_up_required,
       follow_up_at,
       created_at,
@@ -194,11 +196,20 @@ export default async function SalesClientsPage({ searchParams }: Props) {
                       })}
                     </Td>
                     <Td className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/sales/clients/${row.id}`}>
-                          <Eye className="size-3.5 mr-1" /> View / Edit
-                        </Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <ForwardDealButton
+                          activityId={row.id}
+                          businessName={row.client?.business_name || ""}
+                          personName={row.client?.person_name}
+                          isForwarded={row.notes?.includes("[FORWARDED TO HR")}
+                          isDone={row.work_status === "Done"}
+                        />
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/sales/clients/${row.id}`}>
+                            <Eye className="size-3.5 mr-1" /> View / Edit
+                          </Link>
+                        </Button>
+                      </div>
                     </Td>
                   </Tr>
                 ))
