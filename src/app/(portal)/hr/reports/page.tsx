@@ -60,7 +60,7 @@ export default async function HRReportsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-md bg-canvas border border-line text-xs text-ink-muted space-y-2">
+            <div className="p-4 rounded-xl bg-white/50 backdrop-blur-xs border border-white/60 shadow-xs text-xs text-ink-muted space-y-2">
               <p className="font-semibold text-brand-navy flex items-center gap-1.5">
                 <CheckCircle2 className="size-4 text-brand-teal" /> Verified Excel Structure:
               </p>

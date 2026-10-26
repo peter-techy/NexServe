@@ -4,16 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-55 [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-55 [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-brand-navy text-white hover:bg-brand-navy-700",
-        accent: "bg-brand-teal text-white hover:bg-brand-teal-700",
-        secondary: "border border-line-strong bg-surface text-ink hover:bg-canvas",
-        ghost: "text-ink-muted hover:bg-canvas hover:text-ink",
-        danger: "bg-danger text-white hover:bg-danger/90",
-        "danger-outline": "border border-danger/40 bg-surface text-danger hover:bg-danger-50",
+        primary: "bg-brand-navy text-white shadow-[0_4px_14px_rgba(12,36,72,0.2)] hover:bg-brand-navy-700 hover:shadow-[0_6px_20px_rgba(12,36,72,0.3)]",
+        accent: "bg-brand-teal text-white shadow-[0_4px_14px_rgba(24,120,144,0.24)] hover:bg-brand-teal-700 hover:shadow-[0_6px_20px_rgba(24,120,144,0.34)]",
+        secondary: "border border-white/75 bg-white/70 backdrop-blur-md text-ink hover:bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.03),inset_0_1px_0_rgba(255,255,255,0.85)]",
+        ghost: "text-ink-muted hover:bg-white/60 hover:text-ink backdrop-blur-xs",
+        danger: "bg-danger text-white shadow-[0_4px_14px_rgba(176,58,50,0.22)] hover:bg-danger/90 hover:shadow-[0_6px_20px_rgba(176,58,50,0.32)]",
+        "danger-outline": "border border-danger/35 bg-white/70 backdrop-blur-md text-danger hover:bg-danger-50",
         link: "h-auto px-0 text-brand-teal underline-offset-4 hover:underline",
       },
       size: {

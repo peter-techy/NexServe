@@ -43,7 +43,7 @@ export default async function HREmployeesPage({ searchParams }: Props) {
         actions={
           <a
             href="/api/reports/excel"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/80 dark:bg-slate-900/80 hover:bg-white text-brand-navy dark:text-slate-200 border border-slate-200/80 dark:border-slate-800 shadow-sm transition backdrop-blur-md"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white/70 hover:bg-white/95 text-brand-navy border border-white/75 shadow-xs transition backdrop-blur-md"
             download
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />

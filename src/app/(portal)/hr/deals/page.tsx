@@ -138,7 +138,7 @@ export default async function HrDealsHandoverPage() {
                         )}
                       </Td>
                       <Td className="text-xs text-ink-muted max-w-xs">
-                        <p className="bg-canvas/60 rounded-lg p-2 border border-line/60 italic">
+                        <p className="bg-white/50 backdrop-blur-xs rounded-lg p-2 border border-white/60 italic">
                           "{meta.handover_notes || "Deal marked as Done and forwarded."}"
                         </p>
                         {meta.hr_note && (

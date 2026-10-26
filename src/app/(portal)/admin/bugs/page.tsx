@@ -131,7 +131,7 @@ export default async function AdminBugsPage() {
                         </Badge>
                       </Td>
                       <Td className="text-xs text-ink-muted max-w-sm">
-                        <p className="bg-canvas/60 rounded-lg p-2 border border-line/60">
+                        <p className="bg-white/50 backdrop-blur-xs rounded-lg p-2 border border-white/60">
                           {meta.description}
                         </p>
                         {meta.page_url && (

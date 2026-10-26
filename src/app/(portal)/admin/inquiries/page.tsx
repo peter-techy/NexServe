@@ -102,7 +102,7 @@ export default async function AdminInquiriesPage() {
                         <p className="font-semibold text-xs text-brand-navy">{inq.subject}</p>
                       </Td>
                       <Td className="text-xs text-ink-muted max-w-md">
-                        <div className="bg-canvas/60 rounded-lg p-2.5 border border-line/60 whitespace-pre-wrap font-sans">
+                        <div className="bg-white/50 backdrop-blur-xs rounded-lg p-2.5 border border-white/60 whitespace-pre-wrap font-sans">
                           {inq.message}
                         </div>
                       </Td>

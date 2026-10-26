@@ -206,9 +206,9 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
             />
             <CardBody className="p-0">
               {recentActivities && recentActivities.length > 0 ? (
-                <div className="divide-y divide-line">
+                <div className="divide-y divide-white/60">
                   {recentActivities.map((act: any) => (
-                    <div key={act.id} className="p-4 flex items-center justify-between hover:bg-canvas/50 transition">
+                    <div key={act.id} className="p-4 flex items-center justify-between hover:bg-white/60 backdrop-blur-xs transition">
                       <div className="min-w-0 pr-4">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-sm text-ink truncate">
@@ -261,9 +261,9 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
             />
             <CardBody className="p-0">
               {pendingFollowups && pendingFollowups.length > 0 ? (
-                <div className="divide-y divide-line">
+                <div className="divide-y divide-white/60">
                   {pendingFollowups.map((f: any) => (
-                    <div key={f.id} className="p-4 flex items-center justify-between hover:bg-canvas/50 transition">
+                    <div key={f.id} className="p-4 flex items-center justify-between hover:bg-white/60 backdrop-blur-xs transition">
                       <div className="min-w-0 pr-4">
                         <p className="font-semibold text-sm text-ink truncate">
                           {f.client?.business_name}
@@ -272,7 +272,7 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                           Contact: {f.client?.person_name} {f.client?.client_number && `(${f.client.client_number})`}
                         </p>
                         {f.follow_up_notes && (
-                          <p className="text-xs text-ink-subtle italic mt-1 bg-canvas p-1.5 rounded">
+                          <p className="text-xs text-ink-subtle italic mt-1 bg-white/60 backdrop-blur-xs border border-white/60 p-2 rounded-lg">
                             "{f.follow_up_notes}"
                           </p>
                         )}

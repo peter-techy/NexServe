@@ -19,7 +19,7 @@ export default async function ProfilePage() {
           title="Employee Profile"
           description="Assigned role, department, and contact information"
         />
-        <CardBody className="divide-y divide-line text-sm">
+        <CardBody className="divide-y divide-white/60 text-sm">
           <div className="py-3 flex justify-between">
             <span className="text-ink-muted">Full Name</span>
             <span className="font-semibold text-ink">{p.full_name}</span>

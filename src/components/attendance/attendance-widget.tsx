@@ -96,7 +96,7 @@ export function AttendanceWidget({
       return (
         <div className="flex items-center gap-2">
           <ShutdownTracker isCheckedIn={true} />
-          <div className="flex items-center gap-1.5 rounded bg-brand-teal-50 px-2 py-1 text-xs font-semibold text-brand-teal-700">
+          <div className="flex items-center gap-1.5 rounded-lg bg-brand-teal-50/80 backdrop-blur-md border border-brand-teal/25 px-2.5 py-1 text-xs font-semibold text-brand-teal-700 shadow-xs">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-teal opacity-75"></span>
               <span className="relative inline-flex size-2 rounded-full bg-brand-teal"></span>
@@ -143,7 +143,7 @@ export function AttendanceWidget({
 
       {openSession ? (
         <div>
-          <div className="rounded-md bg-brand-teal-50 border border-brand-teal/20 p-3 text-center mb-3">
+          <div className="rounded-xl bg-brand-teal-50/70 backdrop-blur-md border border-brand-teal/25 p-3.5 text-center mb-3 shadow-xs">
             <p className="text-xs text-brand-teal-700 font-medium uppercase tracking-wider">Active Session</p>
             <div className="text-2xl font-bold font-mono text-brand-navy my-1 tabular-nums" suppressHydrationWarning>
               {mounted ? formatClock(elapsed) : "00:00:00"}

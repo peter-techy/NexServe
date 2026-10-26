@@ -24,14 +24,14 @@ export function DialogContent({
 }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0c2448]/30 backdrop-blur-md" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0c2448]/35 backdrop-blur-md" />
       <DialogPrimitive.Content
         className={cn(
-          "card fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col bg-white/85 backdrop-blur-2xl border border-white/70 shadow-[0_24px_60px_rgba(12,36,72,0.18)] focus:outline-none",
+          "card fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_24px_70px_rgba(12,36,72,0.18),inset_0_1px_1px_rgba(255,255,255,0.95)] focus:outline-none",
           className,
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-3.5">
+        <div className="flex items-start justify-between gap-4 border-b border-white/60 px-5 py-3.5">
           <div>
             <DialogPrimitive.Title className="text-base font-semibold text-brand-navy">{title}</DialogPrimitive.Title>
             {description ? (
@@ -77,8 +77,8 @@ export function ConfirmDialog({
     <AlertDialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <AlertDialogPrimitive.Trigger asChild>{trigger}</AlertDialogPrimitive.Trigger>}
       <AlertDialogPrimitive.Portal>
-        <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-brand-navy/30" />
-        <AlertDialogPrimitive.Content className="card fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 p-5 shadow-pop focus:outline-none">
+        <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0c2448]/35 backdrop-blur-md" />
+        <AlertDialogPrimitive.Content className="card fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 p-6 rounded-2xl bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_24px_70px_rgba(12,36,72,0.18),inset_0_1px_1px_rgba(255,255,255,0.95)] focus:outline-none">
           <AlertDialogPrimitive.Title className="text-base font-semibold text-brand-navy">{title}</AlertDialogPrimitive.Title>
           <AlertDialogPrimitive.Description asChild>
             <div className="mt-2 text-sm text-ink-muted">{description}</div>
