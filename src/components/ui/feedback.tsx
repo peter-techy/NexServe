@@ -26,7 +26,7 @@ export function KpiCard({
       {hint && <div className="mt-1 text-xs text-ink-subtle">{hint}</div>}
     </>
   );
-  const base = "card block px-4 py-3.5 hover:shadow-[0_12px_36px_rgba(24,120,144,0.08)] hover:bg-white/85 transition-all";
+  const base = "card block px-4 py-3.5 hover:shadow-[0_16px_40px_rgba(24,120,144,0.12),inset_0_1px_1px_rgba(255,255,255,0.95)] hover:bg-white/85 hover:border-brand-teal/40 hover:-translate-y-0.5 transition-all duration-200";
   if (href) {
     return (
       <Link href={href} className={cn(base, "hover:border-brand-teal/40 hover:bg-white/90")}>
@@ -52,7 +52,7 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center justify-center px-6 py-10 text-center", className)}>
-      <div className="mb-3 rounded-full bg-canvas p-2.5 text-ink-subtle [&_svg]:size-5">{icon ?? <Inbox aria-hidden />}</div>
+      <div className="mb-3 rounded-full bg-white/60 backdrop-blur-md border border-white/70 p-2.5 text-ink-subtle shadow-xs [&_svg]:size-5">{icon ?? <Inbox aria-hidden />}</div>
       <p className="text-sm font-medium text-ink">{title}</p>
       {description && <p className="mt-1 max-w-sm text-xs text-ink-muted">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
@@ -63,7 +63,7 @@ export function EmptyState({
 export function ErrorState({ title = "Something went wrong", message, action }: { title?: string; message?: string; action?: React.ReactNode }) {
   return (
     <div role="alert" className="card flex flex-col items-center px-6 py-10 text-center">
-      <div className="mb-3 rounded-full bg-danger-50 p-2.5 text-danger">
+      <div className="mb-3 rounded-full bg-danger-50/80 backdrop-blur-md border border-danger/20 p-2.5 text-danger shadow-xs">
         <AlertTriangle className="size-5" aria-hidden />
       </div>
       <p className="text-sm font-medium text-ink">{title}</p>
@@ -83,13 +83,13 @@ export function Alert({
   className?: string;
 }) {
   const styles = {
-    info: "border-brand-teal/25 bg-brand-teal-50 text-brand-teal-700",
-    warning: "border-warning/25 bg-warning-50 text-warning",
-    danger: "border-danger/25 bg-danger-50 text-danger",
-    success: "border-success/25 bg-success-50 text-success",
+    info: "border-brand-teal/30 bg-brand-teal-50/80 backdrop-blur-md text-brand-teal-700 shadow-xs",
+    warning: "border-warning/30 bg-warning-50/80 backdrop-blur-md text-warning shadow-xs",
+    danger: "border-danger/30 bg-danger-50/80 backdrop-blur-md text-danger shadow-xs",
+    success: "border-success/30 bg-success-50/80 backdrop-blur-md text-success shadow-xs",
   }[tone];
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cn("rounded-md border px-3.5 py-2.5 text-sm", styles, className)}>
+    <div role={tone === "danger" ? "alert" : "status"} className={cn("rounded-lg border px-3.5 py-2.5 text-sm", styles, className)}>
       {children}
     </div>
   );

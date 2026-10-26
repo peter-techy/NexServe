@@ -73,15 +73,16 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-dvh flex-col justify-center px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Ambient background glow for authentic glassmorphism */}
+      {/* Dynamic ambient background glow for authentic glassmorphism */}
       <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-32 -right-32 size-[500px] rounded-full bg-brand-teal/20 blur-3xl" />
-        <div className="absolute top-1/2 -left-32 size-[500px] rounded-full bg-brand-navy/15 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 size-[500px] rounded-full bg-brand-teal/15 blur-3xl" />
+        <div className="absolute -top-32 -right-32 size-[520px] rounded-full bg-brand-teal/25 blur-[120px] animate-orb-1" />
+        <div className="absolute top-1/3 -left-32 size-[550px] rounded-full bg-brand-navy/20 blur-[130px] animate-orb-2" />
+        <div className="absolute -bottom-32 right-1/4 size-[520px] rounded-full bg-sky-400/20 blur-[120px] animate-orb-3" />
+        <div className="absolute top-2/3 right-10 size-[360px] rounded-full bg-brand-teal/15 blur-[100px]" />
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-block p-2 rounded-xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm mb-4">
+        <div className="inline-block p-2.5 rounded-2xl bg-white/80 backdrop-blur-2xl border border-white/80 shadow-[0_8px_24px_rgba(12,36,72,0.08),inset_0_1px_1px_rgba(255,255,255,0.95)] mb-4">
           <Logo priority />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-brand-navy">
@@ -93,14 +94,14 @@ export default function LoginPage() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="shadow-[0_20px_60px_rgba(12,36,72,0.12)] border-white/70 bg-white/80 backdrop-blur-2xl">
+        <Card className="shadow-[0_24px_70px_rgba(12,36,72,0.14),inset_0_1px_1px_1px_rgba(255,255,255,0.95)] border-white/80 bg-white/70 backdrop-blur-2xl rounded-2xl overflow-hidden">
           <CardBody className="p-6 sm:p-8">
             {/* Separate Portal / Department Switcher */}
-            <div className="mb-4">
+            <div className="mb-5">
               <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ink-subtle">
                 Select Portal
               </label>
-              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-white/45 backdrop-blur-md p-1.5 border border-white/60">
+              <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-slate-100/60 backdrop-blur-xl p-1.5 border border-white/75 shadow-[inset_0_1px_2px_rgba(0,0,0,0.03)]">
                 {PORTALS.map((portal) => {
                   const Icon = portal.icon;
                   const active = selectedDept === portal.id;
@@ -110,9 +111,9 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setSelectedDept(portal.id)}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-1.5 rounded-lg py-2.5 px-2 text-xs font-semibold transition-all",
+                        "flex flex-col items-center justify-center gap-1.5 rounded-lg py-2.5 px-2 text-xs font-semibold transition-all duration-200",
                         active
-                          ? "bg-white/95 text-brand-navy shadow-md ring-1 ring-brand-teal/40 backdrop-blur-xl"
+                          ? "bg-white/95 text-brand-navy shadow-md ring-1 ring-brand-teal/30 backdrop-blur-2xl border border-white/90 scale-[1.02]"
                           : "text-ink-muted hover:text-ink hover:bg-white/60",
                       )}
                     >
@@ -177,7 +178,7 @@ export default function LoginPage() {
 
               <div className="pt-2">
                 <SubmitButton
-                  className="w-full"
+                  className="w-full shadow-[0_4px_16px_rgba(12,36,72,0.2)] hover:shadow-[0_8px_24px_rgba(12,36,72,0.3)] transition-all"
                   pendingText="Signing in…"
                 >
                   Sign in to {activePortal.label}
@@ -187,10 +188,12 @@ export default function LoginPage() {
           </CardBody>
         </Card>
 
-        <div className="mt-6 text-center text-xs text-ink-subtle">
-          <Link href="/about" className="hover:text-ink underline">About NexServe</Link>
-          <span className="mx-2">·</span>
-          <span>NexServe Corporate Management Portal</span>
+        <div className="mt-6 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/60 backdrop-blur-xl border border-white/75 text-xs text-ink-subtle shadow-xs">
+            <Link href="/about" className="hover:text-ink underline">About NexServe</Link>
+            <span className="opacity-40">·</span>
+            <span>Corporate Management Portal</span>
+          </div>
         </div>
       </div>
     </div>

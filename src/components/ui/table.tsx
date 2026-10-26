@@ -16,7 +16,7 @@ export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
     <th
       scope="col"
       className={cn(
-        "border-b border-white/60 bg-white/40 backdrop-blur-md px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted first:pl-5 last:pr-5",
+        "border-b border-white/60 bg-white/50 backdrop-blur-md px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-muted first:pl-5 last:pr-5",
         className,
       )}
       {...props}
@@ -25,11 +25,11 @@ export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
 }
 
 export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-  return <td className={cn("border-b border-line/50 px-3 py-2.5 align-top text-ink first:pl-5 last:pr-5", className)} {...props} />;
+  return <td className={cn("border-b border-white/40 px-3 py-2.5 align-top text-ink first:pl-5 last:pr-5", className)} {...props} />;
 }
 
 export function Tr({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("transition-colors duration-150 hover:bg-white/50", className)} {...props} />;
+  return <tr className={cn("transition-colors duration-150 hover:bg-white/60 backdrop-blur-xs", className)} {...props} />;
 }
 
 /** Builds a URL preserving existing query params. */
@@ -83,7 +83,7 @@ export function Pagination({
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
-  const linkCls = "inline-flex h-8 items-center gap-1 rounded-md border border-line-strong bg-surface px-2.5 text-xs font-medium text-ink hover:bg-canvas";
+  const linkCls = "inline-flex h-8 items-center gap-1 rounded-lg border border-white/70 bg-white/65 backdrop-blur-md px-2.5 text-xs font-medium text-ink hover:bg-white/95 shadow-xs transition-all";
   const disabledCls = "pointer-events-none opacity-45";
   return (
     <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-2 px-5 py-3 text-xs text-ink-muted">

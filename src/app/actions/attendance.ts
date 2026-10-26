@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { authorize } from "@/lib/auth";
+import { writeAudit } from "@/lib/audit";
 import type { ActionState } from "@/lib/types";
 
 export async function checkInAction(): Promise<ActionState> {
@@ -11,14 +12,46 @@ export async function checkInAction(): Promise<ActionState> {
     return { ok: false, message: "Unauthorized." };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("check_in");
+  const admin = createAdminClient();
 
-  if (error) {
-    if (error.message.includes("ALREADY_CHECKED_IN")) {
+  // Check if user already has an active open session
+  const { data: openSession } = await admin
+    .from("attendance_sessions")
+    .select("id")
+    .eq("employee_id", session.profile.id)
+    .is("check_out_at", null)
+    .maybeSingle();
+
+  if (openSession) {
+    return { ok: false, message: "You already have an active work session." };
+  }
+
+  const nowIso = new Date().toISOString();
+  const { data: newSession, error: insertError } = await admin
+    .from("attendance_sessions")
+    .insert({
+      employee_id: session.profile.id,
+      check_in_at: nowIso,
+      updated_at: nowIso,
+    })
+    .select()
+    .single();
+
+  if (insertError) {
+    if (
+      insertError.code === "23P01" ||
+      insertError.message?.toLowerCase().includes("attendance_no_overlap") ||
+      insertError.message?.toLowerCase().includes("duplicate")
+    ) {
       return { ok: false, message: "You already have an active work session." };
     }
-    return { ok: false, message: error.message || "Failed to check in." };
+    return { ok: false, message: insertError.message || "Failed to check in." };
+  }
+
+  try {
+    await writeAudit(session.profile.id, "attendance.check_in", "attendance_session", newSession.id);
+  } catch (auditErr) {
+    console.error("Audit log check-in failed:", auditErr);
   }
 
   revalidatePath("/", "layout");
@@ -31,14 +64,40 @@ export async function checkOutAction(): Promise<ActionState> {
     return { ok: false, message: "Unauthorized." };
   }
 
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("check_out");
+  const admin = createAdminClient();
 
-  if (error) {
-    if (error.message.includes("NOT_CHECKED_IN")) {
-      return { ok: false, message: "No active check-in session found." };
-    }
-    return { ok: false, message: error.message || "Failed to check out." };
+  const { data: openSession } = await admin
+    .from("attendance_sessions")
+    .select("id, check_in_at")
+    .eq("employee_id", session.profile.id)
+    .is("check_out_at", null)
+    .order("check_in_at", { ascending: false })
+    .maybeSingle();
+
+  if (!openSession) {
+    return { ok: false, message: "No active check-in session found." };
+  }
+
+  const nowIso = new Date().toISOString();
+  const finalCheckout =
+    new Date(nowIso) >= new Date(openSession.check_in_at) ? nowIso : openSession.check_in_at;
+
+  const { error: updateError } = await admin
+    .from("attendance_sessions")
+    .update({
+      check_out_at: finalCheckout,
+      updated_at: nowIso,
+    })
+    .eq("id", openSession.id);
+
+  if (updateError) {
+    return { ok: false, message: updateError.message || "Failed to check out." };
+  }
+
+  try {
+    await writeAudit(session.profile.id, "attendance.check_out", "attendance_session", openSession.id);
+  } catch (auditErr) {
+    console.error("Audit log check-out failed:", auditErr);
   }
 
   revalidatePath("/", "layout");
@@ -60,17 +119,37 @@ export async function correctAttendanceAction(
     return { ok: false, message: "A detailed reason for the correction is required." };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("correct_attendance_session", {
-    p_session_id: sessionId,
-    p_check_in_at: checkInAt,
-    p_check_out_at: checkOutAt || null,
-    p_reason: reason.trim(),
-  });
+  const admin = createAdminClient();
+
+  const { data: oldSession } = await admin
+    .from("attendance_sessions")
+    .select("check_in_at, check_out_at")
+    .eq("id", sessionId)
+    .single();
+
+  const { error } = await admin
+    .from("attendance_sessions")
+    .update({
+      check_in_at: checkInAt,
+      check_out_at: checkOutAt || null,
+      corrected: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", sessionId);
 
   if (error) {
     return { ok: false, message: error.message || "Failed to update attendance session." };
   }
+
+  try {
+    await writeAudit(session.profile.id, "attendance.correct", "attendance_session", sessionId, {
+      reason: reason.trim(),
+      old_check_in_at: oldSession?.check_in_at,
+      old_check_out_at: oldSession?.check_out_at,
+      new_check_in_at: checkInAt,
+      new_check_out_at: checkOutAt,
+    });
+  } catch {}
 
   revalidatePath("/", "layout");
   return { ok: true, message: "Attendance record corrected and audited." };

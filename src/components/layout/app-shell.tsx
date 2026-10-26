@@ -81,10 +81,10 @@ function SidebarNav({ groups = [], onNavigate }: { groups?: NavGroup[]; onNaviga
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors duration-150",
+                      "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150",
                       active
-                        ? "bg-white/10 font-medium text-white shadow-[inset_2px_0_0_0_#5fb3c7]"
-                        : "text-white/70 hover:bg-white/5 hover:text-white",
+                        ? "bg-white/15 font-medium text-white shadow-[inset_3px_0_0_0_#5fb3c7,0_4px_16px_rgba(0,0,0,0.12)] border border-white/10 backdrop-blur-md"
+                        : "text-white/70 hover:bg-white/10 hover:text-white backdrop-blur-xs",
                     )}
                   >
                     <Icon className="size-4 shrink-0" aria-hidden />
@@ -106,10 +106,10 @@ function UserMenu({ user }: { user: ShellUser }) {
       <DropdownMenu.Trigger asChild>
         <button
           type="button"
-          className="flex items-center gap-2.5 rounded-md px-1.5 py-1 text-left transition-colors duration-150 hover:bg-canvas"
+          className="flex items-center gap-2.5 rounded-lg px-2 py-1 text-left transition-all duration-150 hover:bg-white/60 hover:shadow-xs border border-transparent hover:border-white/60"
           aria-label={`Account menu for ${user.fullName}`}
         >
-          <span className="flex size-8 items-center justify-center rounded-full bg-brand-navy text-xs font-semibold text-white">
+          <span className="flex size-8 items-center justify-center rounded-full bg-brand-navy text-xs font-semibold text-white shadow-xs">
             {initials(user.fullName)}
           </span>
           <span className="hidden flex-col leading-tight sm:flex">
@@ -120,35 +120,35 @@ function UserMenu({ user }: { user: ShellUser }) {
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} className="card z-50 min-w-56 p-1 bg-white/85 backdrop-blur-2xl border border-white/60 shadow-[0_16px_40px_rgba(12,36,72,0.14)]">
+        <DropdownMenu.Content align="end" sideOffset={6} className="z-50 min-w-56 p-1.5 rounded-xl bg-white/85 backdrop-blur-2xl border border-white/80 shadow-[0_20px_50px_rgba(12,36,72,0.15),inset_0_1px_1px_rgba(255,255,255,0.95)]">
           <div className="px-2.5 py-2">
             <p className="text-sm font-medium text-ink">{user.fullName}</p>
             <p className="truncate text-xs text-ink-muted">{user.email}</p>
             <RoleBadge role={user.role} className="mt-1.5" />
           </div>
-          <DropdownMenu.Separator className="my-1 h-px bg-line" />
+          <DropdownMenu.Separator className="my-1 h-px bg-white/60" />
           <DropdownMenu.Item asChild>
-            <Link href="/profile" className="flex items-center gap-2 rounded px-2.5 py-1.5 text-sm text-ink outline-none data-[highlighted]:bg-canvas">
+            <Link href="/profile" className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-ink outline-none transition-colors data-[highlighted]:bg-white/70">
               <UserCircle className="size-4" aria-hidden /> My profile
             </Link>
           </DropdownMenu.Item>
           {user.role === "super_admin" && (
             <>
               <DropdownMenu.Item asChild>
-                <Link href="/sales/dashboard" className="flex items-center gap-2 rounded px-2.5 py-1.5 text-sm text-ink outline-none data-[highlighted]:bg-canvas">
+                <Link href="/sales/dashboard" className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-ink outline-none transition-colors data-[highlighted]:bg-white/70">
                   <ClipboardList className="size-4" aria-hidden /> Switch to Sales portal
                 </Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
-                <Link href="/hr/dashboard" className="flex items-center gap-2 rounded px-2.5 py-1.5 text-sm text-ink outline-none data-[highlighted]:bg-canvas">
+                <Link href="/hr/dashboard" className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-ink outline-none transition-colors data-[highlighted]:bg-white/70">
                   <Users className="size-4" aria-hidden /> Switch to HR portal
                 </Link>
               </DropdownMenu.Item>
             </>
           )}
-          <DropdownMenu.Separator className="my-1 h-px bg-line" />
+          <DropdownMenu.Separator className="my-1 h-px bg-white/60" />
           <DropdownMenu.Item
-            className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-sm text-danger outline-none cursor-pointer data-[highlighted]:bg-danger-50"
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm text-danger outline-none cursor-pointer transition-colors data-[highlighted]:bg-danger-50"
             onSelect={async (e) => {
               e.preventDefault();
               await logoutAction();
@@ -197,11 +197,13 @@ export function AppShell({
 
   return (
     <div className="min-h-dvh lg:pl-64 relative">
-      {/* Floating ambient glow orbs for authentic glassmorphism */}
+      {/* Dynamic floating ambient glow orbs for authentic glassmorphism across all pages */}
       <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-32 -right-32 size-96 rounded-full bg-brand-teal/15 blur-3xl" />
-        <div className="absolute top-1/2 -left-32 size-[450px] rounded-full bg-brand-navy/10 blur-3xl" />
-        <div className="absolute -bottom-32 right-1/4 size-[500px] rounded-full bg-brand-teal/10 blur-3xl" />
+        <div className="absolute -top-32 -right-32 size-[550px] rounded-full bg-brand-teal/20 blur-[130px] animate-orb-1" />
+        <div className="absolute top-1/3 -left-32 size-[580px] rounded-full bg-brand-navy/15 blur-[140px] animate-orb-2" />
+        <div className="absolute -bottom-32 right-1/4 size-[520px] rounded-full bg-sky-400/15 blur-[130px] animate-orb-3" />
+        <div className="absolute top-2/3 right-12 size-[420px] rounded-full bg-brand-teal/10 blur-[110px]" />
+        <div className="absolute bottom-10 left-1/3 size-[380px] rounded-full bg-indigo-500/10 blur-[120px]" />
       </div>
 
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded focus:bg-white focus:px-3 focus:py-2 focus:text-sm">
@@ -209,9 +211,9 @@ export function AppShell({
       </a>
 
       {/* Desktop sidebar with deep glassmorphism */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#0c2448]/90 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_30px_rgba(0,0,0,0.15)] lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#0c2448]/85 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_30px_rgba(0,0,0,0.15),inset_-1px_0_0_rgba(255,255,255,0.06)] lg:flex">
         <div className="flex h-14 items-center border-b border-white/10 px-5">
-          <span className="rounded bg-white/95 px-2 py-1 shadow-xs">
+          <span className="rounded-lg bg-white/95 px-2.5 py-1 shadow-sm border border-white/80">
             <LogoMark name={companyName} />
           </span>
         </div>
@@ -225,9 +227,9 @@ export function AppShell({
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Navigation">
           <button type="button" aria-label="Close navigation" className="absolute inset-0 bg-[#0c2448]/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-[#0c2448]/95 backdrop-blur-2xl border-r border-white/15">
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col bg-[#0c2448]/95 backdrop-blur-2xl border-r border-white/15 shadow-2xl">
             <div className="flex h-14 items-center justify-between border-b border-white/10 px-4">
-              <span className="rounded bg-white/95 px-2 py-1 shadow-xs">
+              <span className="rounded-lg bg-white/95 px-2.5 py-1 shadow-sm border border-white/80">
                 <LogoMark name={companyName} />
               </span>
               <Button variant="ghost" size="icon-sm" className="text-white hover:bg-white/10 hover:text-white" aria-label="Close navigation" onClick={() => setMobileOpen(false)}>
@@ -242,7 +244,7 @@ export function AppShell({
       )}
 
       {/* Frosted glass top header */}
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-white/60 bg-white/75 backdrop-blur-xl px-3 sm:px-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-white/70 bg-white/70 backdrop-blur-2xl px-3 sm:px-5 shadow-[0_4px_24px_rgba(12,36,72,0.03),inset_0_-1px_0_rgba(255,255,255,0.7)]">
         <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}>
           <Menu />
         </Button>
