@@ -5,9 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/feedback";
 import { formatDuration } from "@/lib/utils";
+import { reconcileStaleAttendanceSessions } from "@/lib/attendance";
 
 export default async function HRAttendanceRecordsPage() {
   await requireRole(["hr", "super_admin"]);
+
+  // Auto-close any sessions from employees whose laptops went to sleep or shut down
+  await reconcileStaleAttendanceSessions();
+
   const supabase = await createClient();
 
   const { data: sessions } = await supabase

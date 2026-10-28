@@ -22,7 +22,7 @@ export default async function HREmployeesPage({ searchParams }: Props) {
   let query = supabase
     .from("profiles")
     .select("*")
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (params.dept) {
     query = query.eq("department", params.dept);

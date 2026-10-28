@@ -105,6 +105,10 @@ export default async function AdminUsersPage() {
                             profileId={u.id}
                             employeeId={u.employee_id}
                             fullName={u.full_name}
+                            email={u.email}
+                            phone={u.phone}
+                            department={u.department}
+                            role={u.role}
                             isActive={u.is_active}
                             isCurrentUser={isCurrentUser}
                           />

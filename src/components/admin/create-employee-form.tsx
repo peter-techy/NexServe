@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { UserPlus, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/form";
@@ -10,10 +11,16 @@ import { toast } from "sonner";
 import type { AppRole, Department } from "@/lib/types";
 
 export function CreateEmployeeForm() {
+  const router = useRouter();
   const formRef = React.useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = React.useTransition();
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
+  const [createdCredentials, setCreatedCredentials] = React.useState<{
+    email: string;
+    password: string;
+    department: string;
+  } | null>(null);
 
   const [role, setRole] = React.useState<AppRole>("sales");
   const [department, setDepartment] = React.useState<Department>("Sales");
@@ -34,8 +41,12 @@ export function CreateEmployeeForm() {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
+    setCreatedCredentials(null);
 
     const formData = new FormData(e.currentTarget);
+    const enteredEmail = (formData.get("email") as string)?.trim().toLowerCase() || "";
+    const enteredPassword = (formData.get("password") as string)?.trim() || "NexServe@2026";
+    const enteredDept = (formData.get("department") as string) || department;
 
     startTransition(async () => {
       try {
@@ -43,10 +54,16 @@ export function CreateEmployeeForm() {
         if (result.ok) {
           toast.success(result.message || "Account created successfully!");
           setSuccessMsg(result.message || "Account created successfully!");
+          setCreatedCredentials({
+            email: enteredEmail,
+            password: enteredPassword,
+            department: enteredDept,
+          });
           formRef.current?.reset();
           // Reset default role and department
           setRole("sales");
           setDepartment("Sales");
+          router.refresh();
         } else {
           toast.error(result.message || "Failed to create account.");
           setErrorMsg(result.message || "Failed to create account.");
@@ -73,10 +90,26 @@ export function CreateEmployeeForm() {
           </div>
         )}
 
-        {successMsg && (
-          <div className="flex items-center gap-2 p-3 text-xs rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{successMsg}</span>
+        {createdCredentials && (
+          <div className="p-3 text-xs rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-800 dark:text-teal-300 space-y-2">
+            <div className="flex items-center gap-1.5 font-semibold text-teal-700 dark:text-teal-400">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{successMsg || "Account Created Successfully!"}</span>
+            </div>
+            <div className="bg-white/90 dark:bg-slate-950/70 p-2.5 rounded-lg border border-teal-500/20 font-mono text-[11px] space-y-1 text-ink">
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Work Email:</span>
+                <span className="font-semibold select-all">{createdCredentials.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Password:</span>
+                <span className="font-semibold select-all text-brand-navy dark:text-teal-300">{createdCredentials.password}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-ink-muted">Department:</span>
+                <span className="font-medium">{createdCredentials.department}</span>
+              </div>
+            </div>
           </div>
         )}
 

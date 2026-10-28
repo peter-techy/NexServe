@@ -27,13 +27,14 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
       ? "Administration"
       : (rawDept as Department);
   const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
-  const password = (formData.get("password") as string) || "";
+  const rawPassword = (formData.get("password") as string) || "";
+  const password = rawPassword.trim();
   const remember = formData.get("remember") === "on";
 
-  if (!department || !email || !password) {
+  if (!email || !password) {
     return {
       ok: false,
-      message: "Please fill in all required fields.",
+      message: "Please enter your corporate email and password.",
       values: { department: rawDept || "Sales", email },
     };
   }
@@ -47,21 +48,34 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
   });
 
   const supabase = await createClient();
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+  let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
-  if (authError || !authData.user) {
+  // Fallback: If trimmed password failed, attempt with raw password in case of intentional whitespace
+  if (authError && rawPassword !== password) {
+    const retry = await supabase.auth.signInWithPassword({
+      email,
+      password: rawPassword,
+    });
+    if (!retry.error && retry.data.user) {
+      authData = retry.data;
+      authError = null;
+    }
+  }
+
+  if (authError || !authData?.user) {
     return {
       ok: false,
-      message: "Invalid email or password.",
+      message: "Invalid corporate email or password. Please check your credentials.",
       values: { department: rawDept, email },
     };
   }
 
-  // Verify profile and department permission
-  const { data: profile } = await supabase
+  // Verify profile using admin client to ensure reliable, instantaneous retrieval
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("*")
     .eq("auth_user_id", authData.user.id)
@@ -83,9 +97,10 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     };
   }
 
-  // Validate department selection & route appropriately
+  revalidatePath("/", "layout");
+
+  // Route Super Admin based on selected portal tab or default to Admin Workspace
   if (profile.role === "super_admin") {
-    revalidatePath("/", "layout");
     if (department === "HR") {
       redirect("/hr/dashboard");
     } else if (department === "Sales") {
@@ -95,26 +110,7 @@ export async function loginAction(prevState: ActionState, formData: FormData): P
     }
   }
 
-  // Non-super-admin validation
-  if (department === "Administration") {
-    await supabase.auth.signOut();
-    return {
-      ok: false,
-      message: `Account '${email}' is registered under ${profile.department} and does not have Super Admin privileges. Please select the ${profile.department} tab to sign in.`,
-      values: { department: profile.department, email },
-    };
-  }
-
-  if (profile.department !== department) {
-    await supabase.auth.signOut();
-    return {
-      ok: false,
-      message: `Your account is registered under the ${profile.department} department. You cannot log in as ${department}.`,
-      values: { department: profile.department, email },
-    };
-  }
-
-  revalidatePath("/", "layout");
+  // Seamlessly route all employees directly to their department workspace
   redirect(homeFor(profile.role));
 }
 

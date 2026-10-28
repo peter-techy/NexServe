@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authorize } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
+import { reconcileStaleAttendanceSessions } from "@/lib/attendance";
 import type { ActionState } from "@/lib/types";
 
 export async function checkInAction(): Promise<ActionState> {
@@ -11,6 +12,9 @@ export async function checkInAction(): Promise<ActionState> {
   if (!session) {
     return { ok: false, message: "Unauthorized." };
   }
+
+  // First reconcile any stale sessions from earlier sleep/shutdown
+  await reconcileStaleAttendanceSessions(session.profile.id);
 
   const admin = createAdminClient();
 
@@ -63,6 +67,8 @@ export async function checkOutAction(): Promise<ActionState> {
   if (!session) {
     return { ok: false, message: "Unauthorized." };
   }
+
+  await reconcileStaleAttendanceSessions(session.profile.id);
 
   const admin = createAdminClient();
 

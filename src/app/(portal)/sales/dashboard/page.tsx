@@ -12,6 +12,7 @@ import { AttendanceWidget } from "@/components/attendance/attendance-widget";
 import { CompleteFollowupButton } from "@/components/followups/complete-followup-button";
 import { ForwardDealButton } from "@/components/deals/forward-deal-button";
 import { formatDuration } from "@/lib/utils";
+import { getActiveAttendanceSession } from "@/lib/attendance";
 import { Users, Clock, CheckCircle2, CalendarClock, Plus, ArrowRight } from "lucide-react";
 import type { AttendanceSession, WorkStatus } from "@/lib/types";
 
@@ -129,16 +130,10 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
     console.error("Sales dashboard followups query error:", err);
   }
 
-  // Fetch active attendance session
+  // Fetch active attendance session (auto-reconciling any stale sleep/shutdown session)
   let activeSession: AttendanceSession | null = null;
   try {
-    const { data } = await supabase
-      .from("attendance_sessions")
-      .select("*")
-      .eq("employee_id", session.profile.id)
-      .is("check_out_at", null)
-      .maybeSingle<AttendanceSession>();
-    activeSession = data;
+    activeSession = await getActiveAttendanceSession(session.profile.id);
   } catch (err) {
     console.error("Sales dashboard active session query error:", err);
   }

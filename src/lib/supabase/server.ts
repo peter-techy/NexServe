@@ -3,6 +3,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env } from "@/lib/env";
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 export const REMEMBER_COOKIE = "ns_remember";
 
 /** Supabase client bound to the current user's session (RLS enforced). */

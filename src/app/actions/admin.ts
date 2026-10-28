@@ -29,7 +29,7 @@ export async function createEmployeeAction(
   if (role === "super_admin" && !department) {
     department = "Administration";
   }
-  const tempPassword = (formData.get("password") as string) || "NexServe@2026";
+  const tempPassword = (formData.get("password") as string)?.trim() || "NexServe@2026";
 
   if (!employee_id || !full_name || !email) {
     return { ok: false, message: "Employee ID, Full Name, and Work Email are required." };
@@ -117,9 +117,142 @@ export async function createEmployeeAction(
     console.error("Audit log error:", auditErr);
   }
 
-  revalidatePath("/admin/users");
-  revalidatePath("/hr/employees");
+  revalidateEmployeeViews();
   return { ok: true, message: `Account for ${full_name} (${employee_id}) created successfully.` };
+}
+
+const REVALIDATE_PATHS = [
+  "/admin/users",
+  "/admin/dashboard",
+  "/hr/employees",
+  "/hr/dashboard",
+  "/hr/activity",
+  "/hr/reports",
+];
+
+function revalidateEmployeeViews() {
+  for (const path of REVALIDATE_PATHS) {
+    try {
+      revalidatePath(path);
+    } catch (e) {
+      console.warn("Failed to revalidate path:", path, e);
+    }
+  }
+}
+
+export async function updateEmployeeAction(
+  profileId: string,
+  formData: FormData
+): Promise<ActionState> {
+  const session = await authorize(["super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized. Super Admin access required." };
+  }
+
+  const full_name = (formData.get("full_name") as string)?.trim() || "";
+  const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
+  const phone = (formData.get("phone") as string)?.trim() || null;
+  const role = (formData.get("role") as AppRole) || "sales";
+  let department = (formData.get("department") as Department) || (role === "hr" ? "HR" : "Sales");
+  if (role === "super_admin" && !department) {
+    department = "Administration";
+  }
+  const newPassword = (formData.get("password") as string)?.trim() || "";
+
+  if (!full_name || !email) {
+    return { ok: false, message: "Full Name and Work Email are required." };
+  }
+
+  if (newPassword && newPassword.length < 6) {
+    return { ok: false, message: "Password must be at least 6 characters long." };
+  }
+
+  const admin = createAdminClient();
+
+  // 1. Fetch current profile
+  const { data: currentProfile, error: fetchErr } = await admin
+    .from("profiles")
+    .select("id, auth_user_id, employee_id, email, full_name, role, department")
+    .eq("id", profileId)
+    .single();
+
+  if (fetchErr || !currentProfile) {
+    return { ok: false, message: "Employee profile not found." };
+  }
+
+  // 2. Check email uniqueness if email changed
+  if (email !== currentProfile.email) {
+    const { data: dupEmail } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .neq("id", profileId)
+      .maybeSingle();
+
+    if (dupEmail) {
+      return { ok: false, message: `Email "${email}" is already in use by another user.` };
+    }
+  }
+
+  // 3. Update Supabase Auth user if needed
+  if (currentProfile.auth_user_id) {
+    const authUpdates: any = {
+      user_metadata: { full_name, employee_id: currentProfile.employee_id },
+    };
+    if (email !== currentProfile.email) {
+      authUpdates.email = email;
+      authUpdates.email_confirm = true;
+    }
+    if (newPassword) {
+      authUpdates.password = newPassword;
+    }
+
+    const { error: authErr } = await admin.auth.admin.updateUserById(
+      currentProfile.auth_user_id,
+      authUpdates
+    );
+
+    if (authErr) {
+      return { ok: false, message: authErr.message || "Failed to update authentication credentials." };
+    }
+  }
+
+  // 4. Update Profile
+  const { error: updateErr } = await admin
+    .from("profiles")
+    .update({
+      full_name,
+      email,
+      phone,
+      role,
+      department,
+    })
+    .eq("id", profileId);
+
+  if (updateErr) {
+    return { ok: false, message: updateErr.message || "Failed to update employee profile." };
+  }
+
+  // 5. Audit Log
+  try {
+    await writeAudit(session.profile.id, "employee.update", "profiles", profileId, {
+      full_name,
+      email,
+      role,
+      department,
+      phone,
+      password_updated: !!newPassword,
+    });
+  } catch (auditErr) {
+    console.error("Audit log error:", auditErr);
+  }
+
+  revalidateEmployeeViews();
+
+  return {
+    ok: true,
+    message: `Profile for ${full_name} (${currentProfile.employee_id}) updated successfully.`,
+  };
 }
 
 export async function toggleEmployeeStatusAction(profileId: string, currentStatus: boolean): Promise<ActionState> {
@@ -168,9 +301,7 @@ export async function toggleEmployeeStatusAction(profileId: string, currentStatu
     profileId
   );
 
-  revalidatePath("/admin/users");
-  revalidatePath("/hr/employees");
-  revalidatePath("/hr/reports");
+  revalidateEmployeeViews();
   return { ok: true, message: `Account ${nextStatus ? "activated" : "deactivated"} successfully.` };
 }
 
@@ -272,9 +403,7 @@ export async function deleteEmployeeAction(profileId: string): Promise<ActionSta
       deleted_role: targetProfile.role,
     });
 
-    revalidatePath("/admin/users");
-    revalidatePath("/hr/employees");
-    revalidatePath("/hr/reports");
+    revalidateEmployeeViews();
 
     return {
       ok: true,

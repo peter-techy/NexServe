@@ -7,6 +7,7 @@ import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { AttendanceWidget } from "@/components/attendance/attendance-widget";
 import { EmptyState } from "@/components/ui/feedback";
 import { formatDuration } from "@/lib/utils";
+import { getActiveAttendanceSession } from "@/lib/attendance";
 import type { AttendanceSession } from "@/lib/types";
 
 export default async function SalesAttendancePage() {
@@ -16,13 +17,8 @@ export default async function SalesAttendancePage() {
 
   const supabase = await createClient();
 
-  // Fetch open session
-  const { data: openSession } = await supabase
-    .from("attendance_sessions")
-    .select("*")
-    .eq("employee_id", session.profile.id)
-    .is("check_out_at", null)
-    .maybeSingle<AttendanceSession>();
+  // Fetch open session (auto-reconciling any stale sleep/shutdown session)
+  const openSession = await getActiveAttendanceSession(session.profile.id);
 
   // Fetch past attendance sessions
   const { data: pastSessions } = await supabase
