@@ -20,6 +20,7 @@ import {
   UserCircle,
   Users,
   UserCog,
+  UserCheck,
   X,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
@@ -45,6 +46,7 @@ const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   settings: Settings,
   inquiries: Mail,
   audit: History,
+  recruitment: UserCheck,
 };
 
 export interface ShellUser {

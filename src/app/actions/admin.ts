@@ -211,29 +211,49 @@ export async function deleteEmployeeAction(profileId: string): Promise<ActionSta
   }
 
   try {
-    // 2. Disassociate foreign key dependencies safely to avoid Postgres FK violations
-    await admin.from("app_settings").update({ updated_by: null }).eq("updated_by", profileId);
-    await admin.from("activity_status_history").update({ changed_by: null }).eq("changed_by", profileId);
-    await admin.from("audit_logs").update({ actor_user_id: null }).eq("actor_user_id", profileId);
-    await admin.from("attendance_sessions").delete().eq("employee_id", profileId);
+    const superAdminId = session.profile.id;
 
-    // Reassign clients to current acting Super Admin so records remain preserved
-    await admin.from("clients").update({ created_by: session.profile.id }).eq("created_by", profileId);
-    await admin.from("clients").update({ assigned_to: session.profile.id }).eq("assigned_to", profileId);
-    await admin.from("clients").update({ archived_by: session.profile.id }).eq("archived_by", profileId);
+    // Try calling atomic RPC function first if migration has been executed in database
+    const { error: rpcErr } = await admin.rpc("delete_employee_safely", {
+      p_target_profile_id: profileId,
+      p_reassign_to_profile_id: superAdminId,
+    });
 
-    // Reassign client activities to current acting Super Admin
-    await admin.from("client_activities").update({ employee_id: session.profile.id }).eq("employee_id", profileId);
-    await admin.from("client_activities").update({ updated_by: session.profile.id }).eq("updated_by", profileId);
+    if (rpcErr) {
+      // Fallback: Disassociate foreign key dependencies safely via service role
+      await admin.from("app_settings").update({ updated_by: null }).eq("updated_by", profileId);
+      await admin.from("activity_status_history").update({ changed_by: null }).eq("changed_by", profileId);
+      await admin.from("audit_logs").update({ actor_user_id: null }).eq("actor_user_id", profileId);
+      await admin.from("attendance_sessions").delete().eq("employee_id", profileId);
 
-    // 3. Delete from profiles table
-    const { error: deleteProfileErr } = await admin
-      .from("profiles")
-      .delete()
-      .eq("id", profileId);
+      // Reassign clients to current acting Super Admin so records remain preserved
+      await admin.from("clients").update({ created_by: superAdminId }).eq("created_by", profileId);
+      await admin.from("clients").update({ assigned_to: superAdminId }).eq("assigned_to", profileId);
+      await admin.from("clients").update({ archived_by: superAdminId }).eq("archived_by", profileId);
 
-    if (deleteProfileErr) {
-      return { ok: false, message: deleteProfileErr.message || "Failed to delete employee profile." };
+      // Reassign client activities to current acting Super Admin
+      await admin.from("client_activities").update({ employee_id: superAdminId }).eq("employee_id", profileId);
+      await admin.from("client_activities").update({ updated_by: superAdminId }).eq("updated_by", profileId);
+
+      // 3. Delete from profiles table
+      const { error: deleteProfileErr } = await admin
+        .from("profiles")
+        .delete()
+        .eq("id", profileId);
+
+      if (deleteProfileErr) {
+        if (
+          deleteProfileErr.code === "23503" ||
+          deleteProfileErr.message?.includes("foreign key constraint")
+        ) {
+          return {
+            ok: false,
+            message:
+              "Cannot delete employee: database triggers prevented reassigning client records. Please run the SQL migration in Supabase or deactivate the employee instead.",
+          };
+        }
+        return { ok: false, message: deleteProfileErr.message || "Failed to delete employee profile." };
+      }
     }
 
     // 4. Delete from Supabase Auth

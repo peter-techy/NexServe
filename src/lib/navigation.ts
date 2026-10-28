@@ -12,7 +12,8 @@ export type NavIcon =
   | "users"
   | "settings"
   | "inquiries"
-  | "audit";
+  | "audit"
+  | "recruitment";
 
 export interface NavItem {
   label: string;
@@ -34,6 +35,7 @@ const salesItems: NavItem[] = [
 
 const hrItems: NavItem[] = [
   { label: "Dashboard", href: "/hr/dashboard", icon: "dashboard" },
+  { label: "Job Applications", href: "/hr/applications", icon: "recruitment" },
   { label: "Deals Handover", href: "/hr/deals", icon: "clients" },
   { label: "Employees", href: "/hr/employees", icon: "employees" },
   { label: "Employee Activity", href: "/hr/activity", icon: "activity" },
@@ -63,6 +65,7 @@ export function navFor(role: AppRole): NavGroup[] {
       label: "HR",
       items: [
         { label: "HR Dashboard", href: "/hr/dashboard", icon: "dashboard" },
+        { label: "Job Applications", href: "/hr/applications", icon: "recruitment" },
         { label: "Deals Handover", href: "/hr/deals", icon: "clients" },
         { label: "Employee Activity", href: "/hr/activity", icon: "activity" },
         { label: "Attendance Records", href: "/hr/attendance", icon: "attendance" },

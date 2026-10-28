@@ -227,7 +227,9 @@ begin
   end if;
 
   -- UPDATE
-  new.employee_id := old.employee_id;
+  if v_actor is not null and not public.is_super_admin() then
+    new.employee_id := old.employee_id;
+  end if;
   new.client_id := old.client_id;
   new.created_at := old.created_at;
   new.updated_by := coalesce(v_actor, new.updated_by);
@@ -271,7 +273,9 @@ begin
     new.archived_by := null;
     new.created_at := now();
   else
-    new.created_by := old.created_by;
+    if v_actor is not null and not public.is_super_admin() then
+      new.created_by := old.created_by;
+    end if;
     new.created_at := old.created_at;
     -- Only Super Admin may re-assign a client.
     if new.assigned_to is distinct from old.assigned_to and v_actor is not null

@@ -32,10 +32,13 @@ export function PublicFooter() {
           <Link href="#services" className="transition hover:text-[#185fa5]">
             Services
           </Link>
-          <Link href="#portfolio" className="transition hover:text-[#185fa5]">
+          <Link href="/#portfolio" className="transition hover:text-[#185fa5]">
             Portfolio
           </Link>
-          <Link href="#contact" className="transition hover:text-[#185fa5]">
+          <Link href="/#careers" className="transition hover:text-[#185fa5]">
+            Careers & Apply
+          </Link>
+          <Link href="/#contact" className="transition hover:text-[#185fa5]">
             Enquiry
           </Link>
           <Link

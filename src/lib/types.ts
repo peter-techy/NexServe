@@ -133,6 +133,48 @@ export interface ContactSource {
   sort_order: number;
 }
 
+export type ApplicationStatus = "new" | "screening" | "interview" | "offered" | "rejected" | "hired";
+
+export const APPLICATION_STATUSES: ApplicationStatus[] = [
+  "new",
+  "screening",
+  "interview",
+  "offered",
+  "rejected",
+  "hired",
+];
+
+export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  new: "New",
+  screening: "Screening",
+  interview: "Interview",
+  offered: "Offered",
+  rejected: "Rejected",
+  hired: "Hired",
+};
+
+export interface JobApplication {
+  id: string;
+  full_name: string;
+  email: string;
+  mobile_number: string;
+  current_city: string;
+  institution_or_employer: string;
+  educational_qualification: string;
+  relevant_experience: string;
+  skills: string;
+  resume_name?: string | null;
+  resume_data?: string | null;
+  position_applied: string;
+  availability: string;
+  linkedin_url?: string | null;
+  why_join: string;
+  status: ApplicationStatus;
+  hr_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Standard result shape for server actions used with useActionState. */
 export interface ActionState {
   ok?: boolean;

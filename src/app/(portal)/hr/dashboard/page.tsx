@@ -9,7 +9,8 @@ import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { formatDuration } from "@/lib/utils";
-import { Users, FileSpreadsheet, Clock, CheckCircle2, CalendarClock, ArrowRight } from "lucide-react";
+import { Users, FileSpreadsheet, Clock, CheckCircle2, CalendarClock, ArrowRight, UserCheck } from "lucide-react";
+import { getJobApplications } from "@/lib/applications";
 
 interface Props {
   searchParams?: Promise<{ period?: string; from?: string; to?: string }>;
@@ -103,6 +104,16 @@ export default async function HRDashboardPage({ searchParams }: Props) {
     console.error("HR dashboard recent sessions error:", err);
   }
 
+  let applicationsCount = 0;
+  let newApplicationsCount = 0;
+  try {
+    const apps = await getJobApplications();
+    applicationsCount = apps.length;
+    newApplicationsCount = apps.filter((a) => a.status === "new").length;
+  } catch {
+    // fallback
+  }
+
   return (
     <div>
       <PageHeader
@@ -110,6 +121,12 @@ export default async function HRDashboardPage({ searchParams }: Props) {
         description="Organisation-wide workforce monitoring, employee activity, and reporting"
         actions={
           <div className="flex items-center gap-2">
+            <Button asChild variant="secondary">
+              <Link href="/hr/applications">
+                <UserCheck className="size-4 mr-1 text-[#185fa5]" />
+                Job Applications {newApplicationsCount > 0 && `(${newApplicationsCount} new)`}
+              </Link>
+            </Button>
             <Button asChild variant="accent">
               <Link href="/hr/reports">
                 <FileSpreadsheet className="size-4 mr-1" /> Generate Excel Report
@@ -221,6 +238,15 @@ export default async function HRDashboardPage({ searchParams }: Props) {
           <Card>
             <CardHeader title="HR Quick Actions" />
             <CardBody className="p-3 space-y-1">
+              <Button asChild variant="ghost" className="w-full justify-between text-xs">
+                <Link href="/hr/applications">
+                  <span className="flex items-center gap-2">
+                    <UserCheck className="size-4 text-[#185fa5]" />
+                    <span>Candidate Applications ({newApplicationsCount} new)</span>
+                  </span>
+                  <ArrowRight className="size-3.5 text-ink-subtle" />
+                </Link>
+              </Button>
               <Button asChild variant="ghost" className="w-full justify-between text-xs">
                 <Link href="/hr/reports">
                   <span className="flex items-center gap-2">

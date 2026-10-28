@@ -1,0 +1,23 @@
+[
+  {
+    "id": "e3a89042-8c9a-41df-a664-9b870e2810f1",
+    "full_name": "Aarav Patel",
+    "email": "aarav.patel@example.com",
+    "mobile_number": "+91 98123 45678",
+    "current_city": "Bengaluru, Karnataka",
+    "institution_or_employer": "National Institute of Technology (NIT) Karnataka / Ex-Accenture",
+    "educational_qualification": "B.Tech in Computer Science & Engineering",
+    "relevant_experience": "3 - 5 Years",
+    "skills": "Next.js, React, TypeScript, Node.js, PostgreSQL, Tailwind CSS, REST APIs, System Design",
+    "resume_name": "Aarav_Patel_CV.pdf",
+    "resume_data": "data:text/plain;base64,QW1hbiBfcGF0ZWxfUmVzdW1lX0NvbnRlbnQ=",
+    "position_applied": "Full Stack Software Engineer",
+    "availability": "15 Days Notice",
+    "linkedin_url": "https://linkedin.com/in/aarav-patel-dev",
+    "why_join": "I have been following NexServe's rapid growth and creative digital delivery approach. I thrive in agile engineering cultures where I can take ownership of end-to-end features and build impactful client solutions. NexServe's focus on quality, modern web architecture, and continuous delivery aligns perfectly with my career aspirations.",
+    "status": "new",
+    "hr_notes": null,
+    "created_at": "2026-10-28T04:30:00.000Z",
+    "updated_at": "2026-10-28T04:30:00.000Z"
+  }
+]

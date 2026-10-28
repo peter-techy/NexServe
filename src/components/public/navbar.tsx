@@ -38,10 +38,13 @@ export function PublicNavbar({
         <Link href="#services" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
           Services
         </Link>
-        <Link href="#portfolio" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
+        <Link href="/#portfolio" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
           Portfolio
         </Link>
-        <Link href="#contact" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
+        <Link href="/#careers" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
+          Careers & Apply
+        </Link>
+        <Link href="/#contact" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
           Contact
         </Link>
       </nav>
@@ -98,14 +101,21 @@ export function PublicNavbar({
             Services
           </Link>
           <Link
-            href="#portfolio"
+            href="/#portfolio"
             className="border-b border-line py-3 text-sm font-medium text-[#334f6d]"
             onClick={() => setMobileOpen(false)}
           >
             Portfolio
           </Link>
           <Link
-            href="#contact"
+            href="/#careers"
+            className="border-b border-line py-3 text-sm font-medium text-[#334f6d]"
+            onClick={() => setMobileOpen(false)}
+          >
+            Careers & Apply
+          </Link>
+          <Link
+            href="/#contact"
             className="border-b border-line py-3 text-sm font-medium text-[#334f6d]"
             onClick={() => setMobileOpen(false)}
           >
