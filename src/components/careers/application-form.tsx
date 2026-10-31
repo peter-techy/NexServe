@@ -11,7 +11,6 @@ import {
   Briefcase,
   Award,
   Upload,
-  Calendar,
   HeartHandshake,
   CheckCircle2,
   AlertCircle,
@@ -51,15 +50,6 @@ const EXPERIENCES = [
   "1 - 2 Years",
   "3 - 5 Years",
   "5+ Years",
-];
-
-const AVAILABILITY_OPTIONS = [
-  "Immediate (Within 7 days)",
-  "15 Days Notice",
-  "30 Days Notice",
-  "60 Days Notice",
-  "90 Days Notice",
-  "Flexible / Open to Discussion",
 ];
 
 export function JobApplicationForm({ defaultPosition }: { defaultPosition?: string }) {
@@ -335,17 +325,17 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
           </div>
         </div>
 
-        {/* SECTION 3: Role & Availability */}
+        {/* SECTION 3: Position Applied For */}
         <div className="space-y-4">
           <div className="border-b border-[#cbddeb] pb-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-[#185fa5]">
-              3. Position & Availability
+              3. Position Applied For
             </h3>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {/* Position Applied For */}
-            <div>
+            <div className="sm:col-span-2">
               <label htmlFor="position_applied_select" className="block text-xs font-semibold text-[#142f4c]">
                 Position Applied For <span className="text-rose-500">*</span>
               </label>
@@ -362,28 +352,6 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
                   <option value="" disabled>Select a position</option>
                   {POSITIONS.map((p) => (
                     <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Availability to Join */}
-            <div>
-              <label htmlFor="availability" className="block text-xs font-semibold text-[#142f4c]">
-                Availability to Join <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative mt-1.5">
-                <Calendar className="pointer-events-none absolute top-3 left-3.5 size-4 text-[#8aa3be]" />
-                <select
-                  id="availability"
-                  name="availability"
-                  required
-                  defaultValue=""
-                  className="w-full rounded-xl border border-[#cbddeb] bg-white/90 py-2.5 pr-4 pl-10 text-xs font-medium text-[#142f4c] shadow-xs focus:border-[#185fa5] focus:ring-2 focus:ring-[#185fa5]/20 focus:outline-hidden"
-                >
-                  <option value="" disabled>Select your notice period</option>
-                  {AVAILABILITY_OPTIONS.map((av) => (
-                    <option key={av} value={av}>{av}</option>
                   ))}
                 </select>
               </div>

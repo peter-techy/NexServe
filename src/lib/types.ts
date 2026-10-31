@@ -169,7 +169,7 @@ export interface JobApplication {
   resume_name?: string | null;
   resume_data?: string | null;
   position_applied: string;
-  availability: string;
+  availability?: string | null;
   linkedin_url?: string | null;
   why_join: string;
   status: ApplicationStatus;

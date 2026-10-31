@@ -164,7 +164,7 @@ export async function createJobApplication(
         resume_name: record.resume_name || null,
         resume_data: record.resume_data || null,
         position_applied: record.position_applied,
-        availability: record.availability,
+        availability: record.availability || "Not specified",
         linkedin_url: record.linkedin_url || null,
         why_join: record.why_join,
         status: record.status,

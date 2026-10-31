@@ -11,7 +11,6 @@ import {
   Briefcase,
   Award,
   Upload,
-  Calendar,
   HeartHandshake,
   CheckCircle2,
   AlertCircle,
@@ -54,15 +53,6 @@ const EXPERIENCES = [
   "1 - 2 Years",
   "3 - 5 Years",
   "5+ Years",
-];
-
-const AVAILABILITY_OPTIONS = [
-  "Immediate (Within 7 days)",
-  "15 Days Notice",
-  "30 Days Notice",
-  "60 Days Notice",
-  "90 Days Notice",
-  "Flexible / Open to Discussion",
 ];
 
 export function CareersSection() {
@@ -377,7 +367,7 @@ export function CareersSection() {
               </div>
 
               {/* 8. Position Applied For */}
-              <div>
+              <div className="sm:col-span-2">
                 <label htmlFor="careers_position" className="block text-xs font-semibold text-[#142f4c]">
                   Position Applied For <span className="text-rose-500">*</span>
                 </label>
@@ -394,28 +384,6 @@ export function CareersSection() {
                     <option value="" disabled>Select position</option>
                     {POSITIONS.map((p) => (
                       <option key={p} value={p}>{p}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* 9. Availability to Join */}
-              <div>
-                <label htmlFor="careers_availability" className="block text-xs font-semibold text-[#142f4c]">
-                  Availability to Join <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative mt-1">
-                  <Calendar className="pointer-events-none absolute top-3 left-3 size-3.5 text-[#8aa3be]" />
-                  <select
-                    id="careers_availability"
-                    name="availability"
-                    required
-                    defaultValue=""
-                    className="w-full rounded-xl border border-[#cbddeb] bg-white py-2.5 pr-3 pl-9 text-xs text-[#142f4c] focus:border-[#185fa5] focus:outline-hidden"
-                  >
-                    <option value="" disabled>Select notice period</option>
-                    {AVAILABILITY_OPTIONS.map((av) => (
-                      <option key={av} value={av}>{av}</option>
                     ))}
                   </select>
                 </div>

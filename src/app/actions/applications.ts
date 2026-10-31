@@ -27,7 +27,7 @@ export async function submitJobApplicationAction(
   const relevant_experience = (formData.get("relevant_experience") as string)?.trim() || "";
   const skills = (formData.get("skills") as string)?.trim() || "";
   const position_applied = (formData.get("position_applied") as string)?.trim() || "";
-  const availability = (formData.get("availability") as string)?.trim() || "";
+  const availability = (formData.get("availability") as string)?.trim() || "Not specified";
   const linkedin_url = (formData.get("linkedin_url") as string)?.trim() || "";
   const why_join = (formData.get("why_join") as string)?.trim() || "";
 
@@ -61,9 +61,6 @@ export async function submitJobApplicationAction(
   }
   if (!(JOB_POSITIONS as readonly string[]).includes(position_applied)) {
     return { ok: false, message: "Invalid position selected. Please choose Sales Executive or Others." };
-  }
-  if (!availability) {
-    return { ok: false, message: "Please specify your availability to join." };
   }
   if (!why_join || why_join.length < 10) {
     return { ok: false, message: "Please share why you want to join NexServe (minimum 10 characters)." };

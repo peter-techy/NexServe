@@ -231,7 +231,7 @@ export function ApplicationsClient({
       `"${a.relevant_experience.replace(/"/g, '""')}"`,
       `"${a.skills.replace(/"/g, '""')}"`,
       `"${a.position_applied.replace(/"/g, '""')}"`,
-      `"${a.availability.replace(/"/g, '""')}"`,
+      a.availability ? `"${a.availability.replace(/"/g, '""')}"` : '""',
       `"${(a.linkedin_url || "").replace(/"/g, '""')}"`,
       `"${a.why_join.replace(/"/g, '""').replace(/\n/g, " ")}"`,
       `"${a.status}"`,
@@ -488,7 +488,7 @@ export function ApplicationsClient({
 
                       {/* Availability */}
                       <Td>
-                        <span className="text-xs text-[#142f4c] font-medium">{app.availability}</span>
+                        <span className="text-xs text-[#142f4c] font-medium">{app.availability || "—"}</span>
                       </Td>
 
                       {/* Resume */}
@@ -645,7 +645,7 @@ export function ApplicationsClient({
                     Availability to Join
                   </p>
                   <p className="mt-1 text-sm font-bold text-[#142f4c]">
-                    {activeModalApp.availability}
+                    {activeModalApp.availability || "Not specified"}
                   </p>
                 </div>
               </div>
@@ -936,10 +936,9 @@ export function ApplicationsClient({
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#142f4c]">Availability to Join *</label>
+                  <label className="block font-semibold text-[#142f4c]">Availability to Join (Optional)</label>
                   <input
                     name="availability"
-                    required
                     placeholder="e.g. Immediate, 15 Days"
                     className="mt-1 w-full rounded-xl border border-[#cbddeb] p-2.5 text-xs focus:border-[#185fa5] focus:outline-hidden"
                   />
