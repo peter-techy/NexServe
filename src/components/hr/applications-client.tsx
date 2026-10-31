@@ -113,7 +113,7 @@ export function ApplicationsClient({
 
   // Extract unique positions for filter
   const positions = React.useMemo(() => {
-    const set = new Set<string>();
+    const set = new Set<string>(["Sales Executive", "Others"]);
     applications.forEach((a) => {
       if (a.position_applied) set.add(a.position_applied);
     });
@@ -924,12 +924,16 @@ export function ApplicationsClient({
                 </div>
                 <div>
                   <label className="block font-semibold text-[#142f4c]">Position Applied For *</label>
-                  <input
+                  <select
                     name="position_applied"
                     required
-                    placeholder="e.g. Frontend Developer"
-                    className="mt-1 w-full rounded-xl border border-[#cbddeb] p-2.5 text-xs focus:border-[#185fa5] focus:outline-hidden"
-                  />
+                    defaultValue=""
+                    className="mt-1 w-full rounded-xl border border-[#cbddeb] bg-white p-2.5 text-xs text-[#142f4c] focus:border-[#185fa5] focus:outline-hidden"
+                  >
+                    <option value="" disabled>Select a position</option>
+                    <option value="Sales Executive">Sales Executive</option>
+                    <option value="Others">Others</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block font-semibold text-[#142f4c]">Availability to Join *</label>

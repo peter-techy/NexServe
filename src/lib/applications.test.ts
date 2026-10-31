@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { APPLICATION_STATUSES, APPLICATION_STATUS_LABELS } from "./types";
+import { APPLICATION_STATUSES, APPLICATION_STATUS_LABELS, JOB_POSITIONS } from "./types";
 
 describe("Job Applications Types & Statuses", () => {
+  it("should have exact required job positions (Sales Executive, Others)", () => {
+    expect(JOB_POSITIONS).toEqual(["Sales Executive", "Others"]);
+  });
+
   it("should have all required candidate statuses", () => {
     expect(APPLICATION_STATUSES).toContain("new");
     expect(APPLICATION_STATUSES).toContain("screening");

@@ -33,15 +33,8 @@ function LinkedInIcon({ className }: { className?: string }) {
 }
 
 const POSITIONS = [
-  "Frontend Developer (React / Next.js)",
-  "Backend Developer (Node.js / Python)",
-  "Full Stack Software Engineer",
-  "UI/UX & Product Designer",
-  "Business Development & Sales Executive",
-  "Digital Marketing Specialist",
-  "Content Creator & Copywriter",
-  "HR & Talent Acquisition Associate",
-  "Other / Open Application",
+  "Sales Executive",
+  "Others",
 ];
 
 const QUALIFICATIONS = [
@@ -77,7 +70,6 @@ export function CareersSection() {
   const [status, setStatus] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [position, setPosition] = React.useState("");
-  const [customPosition, setCustomPosition] = React.useState("");
   const [qualification, setQualification] = React.useState("");
   const [customQualification, setCustomQualification] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -108,9 +100,8 @@ export function CareersSection() {
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    const finalPosition = position === "Other / Open Application" && customPosition ? customPosition : position;
-    if (finalPosition) {
-      formData.set("position_applied", finalPosition);
+    if (position) {
+      formData.set("position_applied", position);
     }
 
     const finalQual = qualification === "Self-Taught / Other Qualification" && customQualification ? customQualification : qualification;
@@ -129,7 +120,6 @@ export function CareersSection() {
         form.reset();
         setSelectedFile(null);
         setPosition("");
-        setCustomPosition("");
         setQualification("");
         setCustomQualification("");
       }
@@ -205,7 +195,7 @@ export function CareersSection() {
         </div>
 
         {/* Right Column: 13-field Application Form */}
-        <div className="lg:col-span-7">
+        <div id="apply" className="lg:col-span-7">
           <form
             id="jobApplicationForm"
             onSubmit={handleSubmit}
@@ -395,6 +385,7 @@ export function CareersSection() {
                   <Briefcase className="pointer-events-none absolute top-3 left-3 size-3.5 text-[#8aa3be]" />
                   <select
                     id="careers_position"
+                    name="position_applied"
                     value={position}
                     onChange={(e) => setPosition(e.target.value)}
                     required
@@ -406,17 +397,6 @@ export function CareersSection() {
                     ))}
                   </select>
                 </div>
-
-                {position === "Other / Open Application" && (
-                  <input
-                    type="text"
-                    placeholder="Specify role"
-                    value={customPosition}
-                    onChange={(e) => setCustomPosition(e.target.value)}
-                    required
-                    className="mt-2 w-full rounded-xl border border-[#cbddeb] bg-white py-2 px-3 text-xs text-[#142f4c] focus:border-[#185fa5] focus:outline-hidden"
-                  />
-                )}
               </div>
 
               {/* 9. Availability to Join */}

@@ -30,15 +30,8 @@ function LinkedInIcon({ className }: { className?: string }) {
 }
 
 const POSITIONS = [
-  "Frontend Developer (React / Next.js)",
-  "Backend Developer (Node.js / Python)",
-  "Full Stack Software Engineer",
-  "UI/UX & Product Designer",
-  "Business Development & Sales Executive",
-  "Digital Marketing Specialist",
-  "Content Creator & Copywriter",
-  "HR & Talent Acquisition Associate",
-  "Other / Open Application",
+  "Sales Executive",
+  "Others",
 ];
 
 const QUALIFICATIONS = [
@@ -74,7 +67,6 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
   const [status, setStatus] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [position, setPosition] = React.useState(defaultPosition || "");
-  const [customPosition, setCustomPosition] = React.useState("");
   const [qualification, setQualification] = React.useState("");
   const [customQualification, setCustomQualification] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -105,10 +97,8 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
     const form = e.currentTarget;
     const formData = new FormData(form);
 
-    // Resolve custom position/qualification if selected
-    const finalPosition = position === "Other / Open Application" && customPosition ? customPosition : position;
-    if (finalPosition) {
-      formData.set("position_applied", finalPosition);
+    if (position) {
+      formData.set("position_applied", position);
     }
 
     const finalQual = qualification === "Self-Taught / Other Qualification" && customQualification ? customQualification : qualification;
@@ -127,7 +117,6 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
         form.reset();
         setSelectedFile(null);
         setPosition("");
-        setCustomPosition("");
         setQualification("");
         setCustomQualification("");
       }
@@ -364,6 +353,7 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
                 <Briefcase className="pointer-events-none absolute top-3 left-3.5 size-4 text-[#8aa3be]" />
                 <select
                   id="position_applied_select"
+                  name="position_applied"
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                   required
@@ -375,17 +365,6 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
                   ))}
                 </select>
               </div>
-
-              {position === "Other / Open Application" && (
-                <input
-                  type="text"
-                  placeholder="Specify target position / role"
-                  value={customPosition}
-                  onChange={(e) => setCustomPosition(e.target.value)}
-                  required
-                  className="mt-2 w-full rounded-xl border border-[#cbddeb] bg-white/90 py-2 px-3 text-xs font-medium text-[#142f4c] shadow-xs focus:border-[#185fa5] focus:ring-2 focus:ring-[#185fa5]/20 focus:outline-hidden"
-                />
-              )}
             </div>
 
             {/* Availability to Join */}

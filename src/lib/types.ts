@@ -133,6 +133,9 @@ export interface ContactSource {
   sort_order: number;
 }
 
+export const JOB_POSITIONS = ["Sales Executive", "Others"] as const;
+export type JobPosition = (typeof JOB_POSITIONS)[number];
+
 export type ApplicationStatus = "new" | "screening" | "interview" | "offered" | "rejected" | "hired";
 
 export const APPLICATION_STATUSES: ApplicationStatus[] = [

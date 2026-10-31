@@ -8,7 +8,11 @@ import {
   updateJobApplication,
   deleteJobApplication,
 } from "@/lib/applications";
-import type { ActionState, ApplicationStatus } from "@/lib/types";
+import {
+  JOB_POSITIONS,
+  type ActionState,
+  type ApplicationStatus,
+} from "@/lib/types";
 
 export async function submitJobApplicationAction(
   prevState: ActionState,
@@ -53,7 +57,10 @@ export async function submitJobApplicationAction(
     return { ok: false, message: "Please list your core skills and competencies." };
   }
   if (!position_applied) {
-    return { ok: false, message: "Please select or enter the position applied for." };
+    return { ok: false, message: "Please select the position applied for." };
+  }
+  if (!(JOB_POSITIONS as readonly string[]).includes(position_applied)) {
+    return { ok: false, message: "Invalid position selected. Please choose Sales Executive or Others." };
   }
   if (!availability) {
     return { ok: false, message: "Please specify your availability to join." };
