@@ -953,10 +953,11 @@ export function ApplicationsClient({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block font-semibold text-[#142f4c]">LinkedIn Profile (Optional)</label>
+                  <label className="block font-semibold text-[#142f4c]">LinkedIn Profile * <span className="text-[11px] font-normal text-rose-500">(Required)</span></label>
                   <input
                     name="linkedin_url"
                     type="url"
+                    required
                     placeholder="https://linkedin.com/in/..."
                     className="mt-1 w-full rounded-xl border border-[#cbddeb] p-2.5 text-xs focus:border-[#185fa5] focus:outline-hidden"
                   />
@@ -974,10 +975,11 @@ export function ApplicationsClient({
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block font-semibold text-[#142f4c]">Resume File (Optional)</label>
+                  <label className="block font-semibold text-[#142f4c]">Resume File * <span className="text-[11px] font-normal text-rose-500">(Required)</span></label>
                   <input
                     type="file"
                     name="resume"
+                    required
                     accept=".pdf,.doc,.docx"
                     className="mt-1 w-full rounded-xl border border-[#cbddeb] p-2 text-xs"
                   />

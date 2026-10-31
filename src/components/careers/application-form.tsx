@@ -96,9 +96,28 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
       formData.set("educational_qualification", finalQual);
     }
 
-    if (selectedFile) {
-      formData.set("resume", selectedFile);
+    const linkedin = (formData.get("linkedin_url") as string)?.trim() || "";
+    if (!linkedin) {
+      setStatus({ ok: false, message: "LinkedIn profile is required." });
+      setIsPending(false);
+      return;
     }
+    if (!/^(https?:\/\/)?([a-z0-9_-]+\.)?linkedin\.com\/.*$/i.test(linkedin)) {
+      setStatus({
+        ok: false,
+        message: "Please provide a valid LinkedIn profile URL (e.g. https://linkedin.com/in/your-profile).",
+      });
+      setIsPending(false);
+      return;
+    }
+
+    if (!selectedFile) {
+      setStatus({ ok: false, message: "Please upload your CV/Resume." });
+      setIsPending(false);
+      return;
+    }
+
+    formData.set("resume", selectedFile);
 
     try {
       const res = await submitJobApplicationAction({}, formData);
@@ -360,7 +379,7 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
             {/* LinkedIn Profile */}
             <div className="sm:col-span-2">
               <label htmlFor="linkedin_url" className="block text-xs font-semibold text-[#142f4c]">
-                LinkedIn Profile <span className="font-normal text-[#8aa3be]">(Optional)</span>
+                LinkedIn Profile <span className="text-rose-500">*</span> <span className="text-[11px] font-semibold text-rose-500">(Required)</span>
               </label>
               <div className="relative mt-1.5">
                 <LinkedInIcon className="pointer-events-none absolute top-3 left-3.5 size-4 text-[#8aa3be]" />
@@ -368,6 +387,7 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
                   id="linkedin_url"
                   name="linkedin_url"
                   type="url"
+                  required
                   placeholder="https://linkedin.com/in/your-profile"
                   className="w-full rounded-xl border border-[#cbddeb] bg-white/90 py-2.5 pr-4 pl-10 text-xs font-medium text-[#142f4c] placeholder:text-[#8aa3be] shadow-xs focus:border-[#185fa5] focus:ring-2 focus:ring-[#185fa5]/20 focus:outline-hidden"
                 />
@@ -409,7 +429,7 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
             {/* Resume / CV Upload */}
             <div>
               <label className="block text-xs font-semibold text-[#142f4c]">
-                Resume / CV Upload <span className="font-normal text-[#8aa3be]">(PDF, DOC, DOCX up to 10MB)</span>
+                Resume / CV Upload <span className="text-rose-500">*</span> <span className="text-[11px] font-semibold text-rose-500">(Required)</span> <span className="font-normal text-[#8aa3be]">(PDF, DOC, DOCX up to 10MB)</span>
               </label>
 
               <input
@@ -431,22 +451,22 @@ export function JobApplicationForm({ defaultPosition }: { defaultPosition?: stri
                     <Upload className="size-5" />
                   </div>
                   <p className="mt-2 text-xs font-semibold text-[#142f4c]">
-                    Click to select your Resume / CV
+                    Click to select your Resume / CV <span className="text-rose-500">*</span>
                   </p>
                   <p className="mt-1 text-[11px] text-[#8aa3be]">
                     Supports PDF, DOC, DOCX (Max 10MB)
                   </p>
                 </div>
               ) : (
-                <div className="mt-2 flex items-center justify-between rounded-xl border border-[#b3cce3] bg-[#f4f8fd] p-3 text-xs">
+                <div className="mt-2 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-8 items-center justify-center rounded-lg bg-[#185fa5]/15 text-[#185fa5]">
+                    <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-600/15 text-emerald-700">
                       <FileText className="size-4" />
                     </div>
                     <div>
                       <p className="font-semibold text-[#142f4c]">{selectedFile.name}</p>
                       <p className="text-[10px] text-[#52677e]">
-                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to submit
                       </p>
                     </div>
                   </div>

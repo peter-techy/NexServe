@@ -62,29 +62,39 @@ export async function submitJobApplicationAction(
   if (!(JOB_POSITIONS as readonly string[]).includes(position_applied)) {
     return { ok: false, message: "Invalid position selected. Please choose Sales Executive or Others." };
   }
+  if (!linkedin_url) {
+    return { ok: false, message: "LinkedIn profile is required." };
+  }
+  if (!/^(https?:\/\/)?([a-z0-9_-]+\.)?linkedin\.com\/.*$/i.test(linkedin_url)) {
+    return { ok: false, message: "Please provide a valid LinkedIn profile URL (e.g. https://linkedin.com/in/your-profile)." };
+  }
   if (!why_join || why_join.length < 10) {
     return { ok: false, message: "Please share why you want to join NexServe (minimum 10 characters)." };
   }
 
-  // Handle Resume File
+  // Handle Resume File (Mandatory)
   const resumeFile = formData.get("resume") as File | null;
-  let resume_name = "";
+  if (!resumeFile || !(resumeFile instanceof Blob) || resumeFile.size === 0) {
+    return { ok: false, message: "Please upload your CV/Resume." };
+  }
+
+  if (resumeFile.size > 10 * 1024 * 1024) {
+    return { ok: false, message: "Resume file exceeds maximum allowed size of 10MB." };
+  }
+
+  const resume_name = resumeFile.name || "Resume.pdf";
   let resume_data = "";
+  try {
+    const buffer = Buffer.from(await resumeFile.arrayBuffer());
+    const mime = resumeFile.type || "application/octet-stream";
+    resume_data = `data:${mime};base64,${buffer.toString("base64")}`;
+  } catch (fileErr) {
+    console.error("[application] resume reading error:", fileErr);
+    return { ok: false, message: "Failed to read uploaded resume file. Please re-upload and try again." };
+  }
 
-  if (resumeFile && resumeFile.size > 0) {
-    // 10MB limit
-    if (resumeFile.size > 10 * 1024 * 1024) {
-      return { ok: false, message: "Resume file exceeds maximum allowed size of 10MB." };
-    }
-
-    resume_name = resumeFile.name;
-    try {
-      const buffer = Buffer.from(await resumeFile.arrayBuffer());
-      const mime = resumeFile.type || "application/octet-stream";
-      resume_data = `data:${mime};base64,${buffer.toString("base64")}`;
-    } catch (fileErr) {
-      console.error("[application] resume reading error:", fileErr);
-    }
+  if (!resume_data) {
+    return { ok: false, message: "Please upload your CV/Resume." };
   }
 
   const result = await createJobApplication({

@@ -99,9 +99,28 @@ export function CareersSection() {
       formData.set("educational_qualification", finalQual);
     }
 
-    if (selectedFile) {
-      formData.set("resume", selectedFile);
+    const linkedin = (formData.get("linkedin_url") as string)?.trim() || "";
+    if (!linkedin) {
+      setStatus({ ok: false, message: "LinkedIn profile is required." });
+      setIsPending(false);
+      return;
     }
+    if (!/^(https?:\/\/)?([a-z0-9_-]+\.)?linkedin\.com\/.*$/i.test(linkedin)) {
+      setStatus({
+        ok: false,
+        message: "Please provide a valid LinkedIn profile URL (e.g. https://linkedin.com/in/your-profile).",
+      });
+      setIsPending(false);
+      return;
+    }
+
+    if (!selectedFile) {
+      setStatus({ ok: false, message: "Please upload your CV/Resume." });
+      setIsPending(false);
+      return;
+    }
+
+    formData.set("resume", selectedFile);
 
     try {
       const res = await submitJobApplicationAction({}, formData);
@@ -407,10 +426,10 @@ export function CareersSection() {
                 </div>
               </div>
 
-              {/* 11. LinkedIn Profile (optional) */}
+              {/* 11. LinkedIn Profile */}
               <div className="sm:col-span-2">
                 <label htmlFor="careers_linkedin" className="block text-xs font-semibold text-[#142f4c]">
-                  LinkedIn Profile <span className="font-normal text-[#8aa3be]">(Optional)</span>
+                  LinkedIn Profile <span className="text-rose-500">*</span> <span className="text-[11px] font-semibold text-rose-500">(Required)</span>
                 </label>
                 <div className="relative mt-1">
                   <LinkedInIcon className="pointer-events-none absolute top-3 left-3 size-3.5 text-[#8aa3be]" />
@@ -418,6 +437,7 @@ export function CareersSection() {
                     id="careers_linkedin"
                     name="linkedin_url"
                     type="url"
+                    required
                     placeholder="https://linkedin.com/in/your-profile"
                     className="w-full rounded-xl border border-[#cbddeb] bg-white py-2.5 pr-3 pl-9 text-xs text-[#142f4c] placeholder:text-[#8aa3be] focus:border-[#185fa5] focus:ring-2 focus:ring-[#185fa5]/20 focus:outline-hidden"
                   />
@@ -427,7 +447,7 @@ export function CareersSection() {
               {/* 12. Resume / CV Upload */}
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-[#142f4c]">
-                  Resume / CV Upload <span className="font-normal text-[#8aa3be]">(PDF, DOC, DOCX up to 10MB)</span>
+                  Resume / CV Upload <span className="text-rose-500">*</span> <span className="text-[11px] font-semibold text-rose-500">(Required)</span> <span className="font-normal text-[#8aa3be]">(PDF, DOC, DOCX up to 10MB)</span>
                 </label>
 
                 <input
@@ -446,17 +466,19 @@ export function CareersSection() {
                     className="mt-1 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-[#b3cce3] bg-[#f4f8fd] p-4 text-center transition hover:border-[#185fa5] hover:bg-[#eaf3fc]"
                   >
                     <Upload className="size-4 text-[#185fa5]" />
-                    <p className="mt-1 text-xs font-semibold text-[#142f4c]">Click to upload Resume / CV</p>
+                    <p className="mt-1 text-xs font-semibold text-[#142f4c]">
+                      Click to upload Resume / CV <span className="text-rose-500">*</span>
+                    </p>
                     <p className="text-[10px] text-[#8aa3be]">PDF, DOC, DOCX (Max 10MB)</p>
                   </div>
                 ) : (
-                  <div className="mt-1 flex items-center justify-between rounded-xl border border-[#b3cce3] bg-[#f4f8fd] p-3 text-xs">
+                  <div className="mt-1 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-xs">
                     <div className="flex items-center gap-2.5">
-                      <FileText className="size-4 text-[#185fa5]" />
+                      <FileText className="size-4 text-emerald-700" />
                       <div>
                         <p className="font-semibold text-[#142f4c]">{selectedFile.name}</p>
                         <p className="text-[10px] text-[#52677e]">
-                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to submit
                         </p>
                       </div>
                     </div>
