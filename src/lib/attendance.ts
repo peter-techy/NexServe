@@ -5,12 +5,27 @@ import type { AttendanceSession } from "@/lib/types";
 // the device is considered asleep, shut down, or disconnected.
 export const STALE_HEARTBEAT_TIMEOUT_MS = 90_000;
 
+// In-memory throttle to avoid firing heavy reconcile queries on every page link click
+const lastReconciledByEmployee = new Map<string, number>();
+const RECONCILE_THROTTLE_MS = 60_000; // run at most once per 60s per employee during navigation
+
 /**
  * Automatically reconciles any abandoned / asleep attendance sessions.
  * If employeeId is specified, reconciles only that employee's open sessions.
  * If employeeId is omitted, reconciles all open sessions older than STALE_HEARTBEAT_TIMEOUT_MS.
  */
-export async function reconcileStaleAttendanceSessions(employeeId?: string): Promise<number> {
+export async function reconcileStaleAttendanceSessions(employeeId?: string, force = false): Promise<number> {
+  const now = Date.now();
+  if (!force && employeeId) {
+    const lastRun = lastReconciledByEmployee.get(employeeId) || 0;
+    if (now - lastRun < RECONCILE_THROTTLE_MS) {
+      return 0;
+    }
+  }
+  if (employeeId) {
+    lastReconciledByEmployee.set(employeeId, now);
+  }
+
   try {
     const admin = createAdminClient();
     const cutoffTime = new Date(Date.now() - STALE_HEARTBEAT_TIMEOUT_MS).toISOString();

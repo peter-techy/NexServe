@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth";
+import { requireRole, getAvailableHrMembers } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
@@ -6,28 +6,31 @@ import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, KpiCard } from "@/components/ui/feedback";
 import { updateDealHandoverStatusAction } from "@/app/actions/clients";
-import { CheckCircle2, Clock, FileCheck, Send, Building, User, Phone, MapPin } from "lucide-react";
+import { DealHrAssignSelector } from "@/components/deals/deal-hr-assign-selector";
+import { CheckCircle2, Clock, FileCheck, Send, Building, User, Phone, MapPin, UserCheck, ExternalLink } from "lucide-react";
 
 export default async function HrDealsHandoverPage() {
   await requireRole(["hr", "super_admin"]);
   const admin = createAdminClient();
 
-  // Query all deals forwarded to HR from audit logs
-  const { data: logs } = await admin
-    .from("audit_logs")
-    .select(`
-      id,
-      created_at,
-      metadata,
-      actor:profiles!audit_logs_actor_user_id_fkey (
+  const [availableHrList, { data: logs }] = await Promise.all([
+    getAvailableHrMembers(),
+    admin
+      .from("audit_logs")
+      .select(`
         id,
-        full_name,
-        email,
-        employee_id
-      )
-    `)
-    .eq("action", "deal.forwarded_to_hr")
-    .order("created_at", { ascending: false });
+        created_at,
+        metadata,
+        actor:profiles!audit_logs_actor_user_id_fkey (
+          id,
+          full_name,
+          email,
+          employee_id
+        )
+      `)
+      .eq("action", "deal.forwarded_to_hr")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const handovers = logs || [];
 
@@ -77,6 +80,7 @@ export default async function HrDealsHandoverPage() {
                 <Th>Date Forwarded</Th>
                 <Th>Client & Business</Th>
                 <Th>Sales Representative</Th>
+                <Th>Assigned HR</Th>
                 <Th>Criteria / Services</Th>
                 <Th>Handover Notes</Th>
                 <Th>HR Status</Th>
@@ -118,6 +122,14 @@ export default async function HrDealsHandoverPage() {
                       <Td>
                         <p className="font-semibold text-xs text-ink">{meta.sales_rep_name || item.actor?.full_name}</p>
                         <p className="text-[11px] text-ink-muted">{meta.sales_rep_email || item.actor?.email}</p>
+                      </Td>
+                      <Td>
+                        <DealHrAssignSelector
+                          logId={item.id}
+                          currentAssignedName={meta.assigned_hr_name}
+                          currentAssignedId={meta.assigned_hr_id}
+                          availableHrList={availableHrList}
+                        />
                       </Td>
                       <Td>
                         <div className="flex flex-wrap gap-1 max-w-xs">
@@ -216,6 +228,17 @@ export default async function HrDealsHandoverPage() {
                               <CheckCircle2 className="size-3.5" /> Completed
                             </span>
                           )}
+
+                          {item.entity_id && (
+                            <a
+                              href={`/sales/clients/${item.entity_id}`}
+                              className="text-[11px] text-ink-muted hover:text-brand-navy flex items-center gap-1 mt-1 font-medium transition"
+                              title="Inspect client interaction & uploaded proofs"
+                            >
+                              <span>View Proofs</span>
+                              <ExternalLink className="size-2.5" />
+                            </a>
+                          )}
                         </div>
                       </Td>
                     </Tr>
@@ -223,7 +246,7 @@ export default async function HrDealsHandoverPage() {
                 })
               ) : (
                 <Tr>
-                  <Td colSpan={7} className="p-0">
+                  <Td colSpan={8} className="p-0">
                     <EmptyState
                       title="No forwarded deals yet"
                       description="When sales agents close deals and click 'Forward to HR', they will appear here for HR onboarding."

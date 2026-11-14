@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireRole, getAvailableHrMembers, type HrMember } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getSettings, DEFAULT_SETTINGS } from "@/lib/settings";
 import { resolveRange, formatDate, formatTime } from "@/lib/dates";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,9 +9,22 @@ import { KpiCard, EmptyState } from "@/components/ui/feedback";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableWrap, Th, Td, Tr } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { formatDuration } from "@/lib/utils";
-import { Users, FileSpreadsheet, Clock, CheckCircle2, CalendarClock, ArrowRight, UserCheck } from "lucide-react";
+import {
+  Users,
+  FileSpreadsheet,
+  Clock,
+  CheckCircle2,
+  CalendarClock,
+  ArrowRight,
+  UserCheck,
+  Building,
+  User,
+  Phone,
+} from "lucide-react";
 import { getJobApplications } from "@/lib/applications";
+import { DealHrAssignSelector } from "@/components/deals/deal-hr-assign-selector";
 
 interface Props {
   searchParams?: Promise<{ period?: string; from?: string; to?: string }>;
@@ -114,6 +128,48 @@ export default async function HRDashboardPage({ searchParams }: Props) {
     // fallback
   }
 
+  // Forwarded deals from sales & available HR members for assignment
+  let availableHrList: HrMember[] = [];
+  let forwardedDeals: any[] = [];
+  let forwardedDealsCount = 0;
+  let pendingDealsCount = 0;
+
+  try {
+    const admin = createAdminClient();
+    const [hrList, logsRes, countRes] = await Promise.all([
+      getAvailableHrMembers(),
+      admin
+        .from("audit_logs")
+        .select(`
+          id,
+          created_at,
+          metadata,
+          actor:profiles!audit_logs_actor_user_id_fkey (
+            id,
+            full_name,
+            email,
+            employee_id
+          )
+        `)
+        .eq("action", "deal.forwarded_to_hr")
+        .order("created_at", { ascending: false })
+        .limit(6),
+      admin
+        .from("audit_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("action", "deal.forwarded_to_hr"),
+    ]);
+
+    availableHrList = hrList;
+    forwardedDeals = logsRes.data || [];
+    forwardedDealsCount = countRes.count || 0;
+    pendingDealsCount = forwardedDeals.filter(
+      (d: any) => d.metadata?.status === "pending_hr_review" || !d.metadata?.status
+    ).length;
+  } catch (err) {
+    console.error("HR dashboard forwarded deals error:", err);
+  }
+
   return (
     <div>
       <PageHeader
@@ -121,6 +177,12 @@ export default async function HRDashboardPage({ searchParams }: Props) {
         description="Organisation-wide workforce monitoring, employee activity, and reporting"
         actions={
           <div className="flex items-center gap-2">
+            <Button asChild variant="secondary">
+              <Link href="/hr/deals">
+                <Building className="size-4 mr-1 text-emerald-600" />
+                Deals Handover {forwardedDealsCount > 0 && `(${forwardedDealsCount})`}
+              </Link>
+            </Button>
             <Button asChild variant="secondary">
               <Link href="/hr/applications">
                 <UserCheck className="size-4 mr-1 text-[#185fa5]" />
@@ -137,13 +199,20 @@ export default async function HRDashboardPage({ searchParams }: Props) {
       />
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <KpiCard
           label="Active Workforce"
           value={totalEmployees}
           hint={`${salesEmployees} in Sales`}
           icon={<Users className="size-4" />}
           href="/hr/employees"
+        />
+        <KpiCard
+          label="Deals Forwarded"
+          value={forwardedDealsCount}
+          hint={pendingDealsCount > 0 ? `${pendingDealsCount} pending review` : "All reviewed"}
+          icon={<Building className="size-4" />}
+          href="/hr/deals"
         />
         <KpiCard
           label="Total Clients Engaged"
@@ -169,8 +238,120 @@ export default async function HRDashboardPage({ searchParams }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Recent Attendance Activity */}
+        {/* Left Column: Forwarded Deals Queue & Attendance Activity */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Forwarded Deals from Sales with HR Assignment */}
+          <Card>
+            <CardHeader
+              title="Forwarded Deals from Sales"
+              description="Closed sales deals forwarded for HR crediting and onboarding. Choose an HR employee to assign ownership."
+              actions={
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/hr/deals" className="flex items-center gap-1">
+                    <span>Manage all ({forwardedDealsCount})</span>
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              }
+            />
+            <CardBody className="p-0">
+              {forwardedDeals && forwardedDeals.length > 0 ? (
+                <TableWrap>
+                  <Table>
+                    <thead>
+                      <Tr>
+                        <Th>Date</Th>
+                        <Th>Client & Business</Th>
+                        <Th>Sales Rep</Th>
+                        <Th>Assigned HR Employee</Th>
+                        <Th>Status</Th>
+                        <Th className="text-right">Action</Th>
+                      </Tr>
+                    </thead>
+                    <tbody>
+                      {forwardedDeals.map((item: any) => {
+                        const meta = item.metadata || {};
+                        const status = meta.status || "pending_hr_review";
+                        const assignedName = meta.assigned_hr_name || "General HR Pool";
+                        const assignedId = meta.assigned_hr_id;
+
+                        return (
+                          <Tr key={item.id}>
+                            <Td className="whitespace-nowrap text-xs text-ink-muted">
+                              {formatDate(item.created_at, tz)}
+                            </Td>
+                            <Td>
+                              <p className="font-semibold text-xs text-brand-navy">
+                                {meta.business_name || "—"}
+                              </p>
+                              <p className="text-[11px] text-ink-muted flex items-center gap-1 mt-0.5">
+                                <User className="size-3" /> {meta.client_name || "Client"}
+                              </p>
+                            </Td>
+                            <Td className="text-xs">
+                              <span className="font-medium text-ink">
+                                {meta.sales_rep_name || item.actor?.full_name || "Sales Rep"}
+                              </span>
+                            </Td>
+                            <Td>
+                              <DealHrAssignSelector
+                                logId={item.id}
+                                currentAssignedName={assignedName}
+                                currentAssignedId={assignedId}
+                                availableHrList={availableHrList}
+                                compact={true}
+                              />
+                            </Td>
+                            <Td>
+                              {status === "pending_hr_review" && (
+                                <Badge tone="warning" className="text-[10px]">
+                                  Pending Review
+                                </Badge>
+                              )}
+                              {status === "acknowledged" && (
+                                <Badge tone="teal" className="text-[10px]">
+                                  Acknowledged
+                                </Badge>
+                              )}
+                              {status === "contract_sent" && (
+                                <Badge tone="navy" className="text-[10px]">
+                                  Contract Sent
+                                </Badge>
+                              )}
+                              {status === "onboarded" && (
+                                <Badge tone="success" className="text-[10px]">
+                                  Onboarded
+                                </Badge>
+                              )}
+                              {status === "cancelled" && (
+                                <Badge tone="danger" className="text-[10px]">
+                                  Cancelled
+                                </Badge>
+                              )}
+                            </Td>
+                            <Td className="text-right">
+                              <Button asChild variant="ghost" size="sm" className="h-7 text-xs px-2">
+                                <Link href="/hr/deals">
+                                  Review <ArrowRight className="size-3 ml-1" />
+                                </Link>
+                              </Button>
+                            </Td>
+                          </Tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </TableWrap>
+              ) : (
+                <EmptyState
+                  title="No deals forwarded yet"
+                  description="When sales agents close and forward deals to HR, they will appear here with an option to assign an HR employee."
+                />
+              )}
+            </CardBody>
+          </Card>
+
+          {/* Workforce Check-ins */}
           <Card>
             <CardHeader
               title="Recent Workforce Check-ins"
@@ -238,6 +419,15 @@ export default async function HRDashboardPage({ searchParams }: Props) {
           <Card>
             <CardHeader title="HR Quick Actions" />
             <CardBody className="p-3 space-y-1">
+              <Button asChild variant="ghost" className="w-full justify-between text-xs">
+                <Link href="/hr/deals">
+                  <span className="flex items-center gap-2">
+                    <Building className="size-4 text-emerald-600" />
+                    <span>Deals Handover & Assignment ({forwardedDealsCount})</span>
+                  </span>
+                  <ArrowRight className="size-3.5 text-ink-subtle" />
+                </Link>
+              </Button>
               <Button asChild variant="ghost" className="w-full justify-between text-xs">
                 <Link href="/hr/applications">
                   <span className="flex items-center gap-2">

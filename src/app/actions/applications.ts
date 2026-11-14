@@ -7,6 +7,7 @@ import {
   createJobApplication,
   updateJobApplication,
   deleteJobApplication,
+  uploadResumeToStorage,
 } from "@/lib/applications";
 import {
   JOB_POSITIONS,
@@ -82,19 +83,23 @@ export async function submitJobApplicationAction(
     return { ok: false, message: "Resume file exceeds maximum allowed size of 10MB." };
   }
 
+  const tempAppId = crypto.randomUUID();
   const resume_name = resumeFile.name || "Resume.pdf";
   let resume_data = "";
-  try {
-    const buffer = Buffer.from(await resumeFile.arrayBuffer());
-    const mime = resumeFile.type || "application/octet-stream";
-    resume_data = `data:${mime};base64,${buffer.toString("base64")}`;
-  } catch (fileErr) {
-    console.error("[application] resume reading error:", fileErr);
-    return { ok: false, message: "Failed to read uploaded resume file. Please re-upload and try again." };
-  }
 
-  if (!resume_data) {
-    return { ok: false, message: "Please upload your CV/Resume." };
+  // 1. Upload to Supabase Storage bucket for permanent public URL
+  const storageResult = await uploadResumeToStorage(resumeFile, tempAppId);
+  if (storageResult) {
+    resume_data = storageResult.url;
+  } else {
+    // Fallback: generate data URL
+    try {
+      const buffer = Buffer.from(await resumeFile.arrayBuffer());
+      const mime = resumeFile.type || "application/octet-stream";
+      resume_data = `data:${mime};base64,${buffer.toString("base64")}`;
+    } catch (fileErr) {
+      console.error("[application] resume reading error:", fileErr);
+    }
   }
 
   const result = await createJobApplication({
@@ -121,6 +126,7 @@ export async function submitJobApplicationAction(
   }
 
   revalidatePath("/hr/applications");
+  revalidatePath("/hr/dashboard");
   return {
     ok: true,
     message: "Your application has been received! The NexServe HR team will review your profile shortly.",
@@ -155,6 +161,7 @@ export async function updateApplicationStatusAction(
   );
 
   revalidatePath("/hr/applications");
+  revalidatePath("/hr/dashboard");
   return { ok: true, message: `Candidate status updated to "${newStatus}".` };
 }
 
@@ -178,5 +185,6 @@ export async function deleteApplicationAction(applicationId: string): Promise<Ac
   );
 
   revalidatePath("/hr/applications");
+  revalidatePath("/hr/dashboard");
   return { ok: true, message: "Application record deleted." };
 }

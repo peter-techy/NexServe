@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireRole, getAvailableHrMembers } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings, DEFAULT_SETTINGS } from "@/lib/settings";
 import { resolveRange, formatDate, formatDateTime } from "@/lib/dates";
@@ -33,6 +33,10 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
 
   const tz = settings.business_timezone;
   const range = resolveRange(params, tz, "today");
+
+  const [availableHrList] = await Promise.all([
+    getAvailableHrMembers(),
+  ]);
 
   const supabase = await createClient();
 
@@ -130,6 +134,40 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
     console.error("Sales dashboard followups query error:", err);
   }
 
+  // Fetch deals with work_status = 'Done' (deals won)
+  let dealsWonActivities: any[] = [];
+  try {
+    let dealsWonQuery = supabase
+      .from("client_activities")
+      .select(`
+        id,
+        contact_date,
+        contact_source,
+        work_status,
+        criteria,
+        notes,
+        client:clients (
+          id,
+          person_name,
+          business_name,
+          location,
+          client_number
+        )
+      `)
+      .eq("work_status", "Done")
+      .order("contact_date", { ascending: false })
+      .limit(6);
+
+    if (session.profile.role === "sales") {
+      dealsWonQuery = dealsWonQuery.eq("employee_id", session.profile.id);
+    }
+
+    const { data } = await dealsWonQuery;
+    dealsWonActivities = data || [];
+  } catch (err) {
+    console.error("Sales dashboard deals won query error:", err);
+  }
+
   // Fetch active attendance session (auto-reconciling any stale sleep/shutdown session)
   let activeSession: AttendanceSession | null = null;
   try {
@@ -187,8 +225,85 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Recent Activities & Pending Follow-ups */}
+        {/* Left Column: Completed Deals, Recent Activities & Pending Follow-ups */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Completed Deals (Won) — Ready for HR Handover */}
+          <Card className="border-brand-teal/30 bg-gradient-to-br from-brand-teal-50/40 via-white/80 to-white/60 shadow-xs">
+            <CardHeader
+              title="Completed Deals — Forward to HR"
+              description="Deals closed as Won. Choose an available HR representative to assign client onboarding and contract processing."
+              actions={
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/sales/clients?status=Done">View all closed deals</Link>
+                </Button>
+              }
+            />
+            <CardBody className="p-0">
+              {dealsWonActivities && dealsWonActivities.length > 0 ? (
+                <div className="divide-y divide-brand-teal/10">
+                  {dealsWonActivities.map((act: any) => {
+                    const isForwarded = act.notes?.includes("[FORWARDED TO HR");
+                    const forwardMatch = act.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
+                    const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+
+                    return (
+                      <div
+                        key={act.id}
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/70 transition"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-sm text-brand-navy truncate">
+                              {act.client?.business_name || "Unknown Business"}
+                            </p>
+                            <StatusBadge status={act.work_status as WorkStatus} />
+                          </div>
+                          <p className="text-xs text-ink-muted mt-0.5">
+                            Client: <span className="font-medium text-ink">{act.client?.person_name}</span>
+                            {act.client?.client_number && ` · ${act.client?.client_number}`}
+                            {act.client?.location && ` · ${act.client?.location}`}
+                          </p>
+                          {act.criteria && (
+                            <p className="text-[11px] text-ink-subtle mt-0.5">
+                              Services: {Array.isArray(act.criteria) ? act.criteria.join(", ") : act.criteria}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <ForwardDealButton
+                            activityId={act.id}
+                            businessName={act.client?.business_name || ""}
+                            personName={act.client?.person_name}
+                            isForwarded={isForwarded}
+                            forwardedToName={forwardedToName}
+                            isDone={true}
+                            availableHrList={availableHrList}
+                          />
+                          <Button asChild variant="ghost" size="sm" className="h-7 text-xs px-2 text-ink-muted">
+                            <Link href={`/sales/clients/${act.id}`}>
+                              View <ArrowRight className="size-3 ml-1" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyState
+                  title="No completed deals yet"
+                  description="When you close a deal and mark it as Done, it will appear here ready to forward to HR."
+                  action={
+                    <Button asChild size="sm" variant="accent">
+                      <Link href="/sales/clients/new">Add Client</Link>
+                    </Button>
+                  }
+                />
+              )}
+            </CardBody>
+          </Card>
+
           <Card>
             <CardHeader
               title="Recent Client Activity"
@@ -216,13 +331,22 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <ForwardDealButton
-                          activityId={act.id}
-                          businessName={act.client?.business_name || ""}
-                          personName={act.client?.person_name}
-                          isForwarded={act.notes?.includes("[FORWARDED TO HR")}
-                          isDone={act.work_status === "Done"}
-                        />
+                        {(() => {
+                          const isForwarded = act.notes?.includes("[FORWARDED TO HR");
+                          const forwardMatch = act.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
+                          const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+                          return (
+                            <ForwardDealButton
+                              activityId={act.id}
+                              businessName={act.client?.business_name || ""}
+                              personName={act.client?.person_name}
+                              isForwarded={isForwarded}
+                              forwardedToName={forwardedToName}
+                              isDone={act.work_status === "Done"}
+                              availableHrList={availableHrList}
+                            />
+                          );
+                        })()}
                         <span className="text-xs text-ink-subtle">
                           {formatDate(act.contact_date, tz)}
                         </span>

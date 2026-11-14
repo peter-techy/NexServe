@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireRole } from "@/lib/auth";
+import { requireRole, getAvailableHrMembers } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardHeader, CardBody } from "@/components/ui/card";
@@ -7,6 +7,10 @@ import { Field, Input, Textarea, Select, Checkbox } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { updateClientActivityAction, archiveClientAction } from "@/app/actions/clients";
+import { getProofsForActivity } from "@/lib/proofs";
+import { ProofsSection } from "@/components/clients/proofs-section";
+import { ForwardDealButton } from "@/components/deals/forward-deal-button";
+import { CheckCircle2, Sparkles } from "lucide-react";
 import type { WorkStatus } from "@/lib/types";
 
 interface Props {
@@ -14,20 +18,23 @@ interface Props {
 }
 
 export default async function ClientDetailPage({ params }: Props) {
-  const session = await requireRole(["sales", "super_admin"]);
+  const session = await requireRole(["sales", "hr", "super_admin"]);
   const { id } = await params;
 
   const supabase = await createClient();
 
-  // Fetch client activity and client record
-  const { data: activity, error } = await supabase
-    .from("client_activities")
-    .select(`
-      *,
-      client:clients (*)
-    `)
-    .eq("id", id)
-    .single();
+  // Fetch client activity, client record, proofs, and available HR members in parallel
+  const [{ data: activity, error }, availableHrList] = await Promise.all([
+    supabase
+      .from("client_activities")
+      .select(`
+        *,
+        client:clients (*)
+      `)
+      .eq("id", id)
+      .single(),
+    getAvailableHrMembers(),
+  ]);
 
   if (error || !activity) {
     notFound();
@@ -39,9 +46,14 @@ export default async function ClientDetailPage({ params }: Props) {
   }
 
   const client = activity.client;
+  const proofs = await getProofsForActivity(activity.id);
+
+  const isForwarded = activity.notes?.includes("[FORWARDED TO HR");
+  const forwardMatch = activity.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
+  const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       <PageHeader
         title={`${client.business_name}`}
         description={`Contact: ${client.person_name} · ${client.location}`}
@@ -50,7 +62,57 @@ export default async function ClientDetailPage({ params }: Props) {
           { label: "Clients", href: "/sales/clients" },
           { label: client.business_name },
         ]}
+        actions={
+          <div className="flex items-center gap-2">
+            <ForwardDealButton
+              activityId={activity.id}
+              businessName={client.business_name}
+              personName={client.person_name}
+              isForwarded={isForwarded}
+              forwardedToName={forwardedToName}
+              isDone={activity.work_status === "Done"}
+              availableHrList={availableHrList}
+            />
+          </div>
+        }
       />
+
+      {/* Deal Forwarded Notice Banner */}
+      {isForwarded && (
+        <div className="rounded-xl border border-brand-teal/30 bg-brand-teal-50/70 p-3.5 text-xs text-brand-navy flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="size-4 text-brand-teal shrink-0" />
+            <div>
+              <p className="font-semibold text-brand-navy">
+                Deal Won &amp; Forwarded to HR {forwardedToName ? `(${forwardedToName})` : ""}
+              </p>
+              <p className="text-ink-muted text-[11px] mt-0.5">
+                This account is currently in HR review for employee crediting and contract onboarding.
+              </p>
+            </div>
+          </div>
+          <Badge tone="teal" className="text-[11px]">
+            In HR Queue
+          </Badge>
+        </div>
+      )}
+
+      {/* Deal Done but Not Forwarded Callout */}
+      {!isForwarded && activity.work_status === "Done" && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-xs text-amber-950 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-amber-600 shrink-0" />
+            <div>
+              <p className="font-semibold text-amber-950">
+                Deal Closed! Ready to Forward to HR
+              </p>
+              <p className="text-amber-800 text-[11px] mt-0.5">
+                Click &quot;Deal Done · Forward to HR&quot; above to choose an available HR representative.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form action={updateClientActivityAction as any}>
         <input type="hidden" name="activity_id" value={activity.id} />
@@ -64,7 +126,7 @@ export default async function ClientDetailPage({ params }: Props) {
             />
             <CardBody className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-xs text-ink-subtle">Person's Name</p>
+                <p className="text-xs text-ink-subtle">Person&apos;s Name</p>
                 <p className="font-medium text-ink mt-0.5">{client.person_name}</p>
               </div>
               <div>
@@ -135,19 +197,33 @@ export default async function ClientDetailPage({ params }: Props) {
                 <label className="block text-sm font-medium text-ink mb-2">
                   Criteria
                 </label>
-                <div className="flex flex-wrap gap-4">
-                  {["Digital Marketing", "Content Creation", "Special Demand"].map((crit) => (
-                    <label key={crit} className="flex items-center gap-2 cursor-pointer text-sm">
-                      <input
-                        type="checkbox"
-                        name="criteria"
-                        value={crit}
-                        defaultChecked={activity.criteria?.includes(crit)}
-                        className="size-4 rounded border-line-strong text-brand-teal accent-[#187890]"
-                      />
-                      <span>{crit}</span>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    "Outsourcing",
+                    "Offshoring",
+                    "Dedicated Hiring",
+                    "Project-Based Delivery",
+                    "Custom Staffing",
+                    "Technical Support",
+                    "Consulting",
+                  ].map((criterion) => {
+                    const isChecked = activity.criteria?.includes(criterion);
+                    return (
+                      <label
+                        key={criterion}
+                        className="flex items-center gap-2 p-2 rounded-lg border border-line hover:bg-white/60 cursor-pointer text-xs"
+                      >
+                        <input
+                          type="checkbox"
+                          name="criteria"
+                          value={criterion}
+                          defaultChecked={isChecked}
+                          className="rounded text-brand-teal focus:ring-brand-teal"
+                        />
+                        <span className="text-ink">{criterion}</span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -219,6 +295,9 @@ export default async function ClientDetailPage({ params }: Props) {
           </Card>
         </div>
       </form>
+
+      {/* Interaction Proofs & Call Recordings Section (Independent from parent form) */}
+      <ProofsSection activityId={activity.id} initialProofs={proofs} />
     </div>
   );
 }

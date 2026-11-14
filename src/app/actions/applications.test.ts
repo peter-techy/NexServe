@@ -10,6 +10,7 @@ vi.mock("@/lib/applications", () => ({
   createJobApplication: vi.fn().mockResolvedValue({ ok: true, id: "mock-id-123" }),
   updateJobApplication: vi.fn().mockResolvedValue({ ok: true }),
   deleteJobApplication: vi.fn().mockResolvedValue({ ok: true }),
+  uploadResumeToStorage: vi.fn().mockResolvedValue({ url: "https://mock-storage.com/resume.pdf", name: "resume.pdf" }),
 }));
 
 vi.mock("@/lib/auth", () => ({

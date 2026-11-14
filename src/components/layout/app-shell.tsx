@@ -60,7 +60,17 @@ function isActive(pathname: string, href: string) {
   return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
 }
 
-function SidebarNav({ groups = [], onNavigate }: { groups?: NavGroup[]; onNavigate?: () => void }) {
+function SidebarNav({
+  groups = [],
+  onNavigate,
+  navigatingTo,
+  onNavigateStart,
+}: {
+  groups?: NavGroup[];
+  onNavigate?: () => void;
+  navigatingTo?: string | null;
+  onNavigateStart?: (href: string) => void;
+}) {
   const pathname = usePathname() || "";
   // Pick the most specific matching href so only one item is active.
   const allHrefs = (groups || []).flatMap((g) => (g?.items || []).map((i) => i.href));
@@ -76,21 +86,35 @@ function SidebarNav({ groups = [], onNavigate }: { groups?: NavGroup[]; onNaviga
             {(group.items || []).map((item) => {
               const Icon = ICONS[item.icon] || LayoutDashboard;
               const active = item.href === activeHref;
+              const isTargeted = navigatingTo === item.href;
               return (
                 <li key={item.href + item.label}>
                   <Link
                     href={item.href}
-                    onClick={onNavigate}
+                    prefetch={true}
+                    onClick={() => {
+                      if (item.href !== pathname) {
+                        onNavigateStart?.(item.href);
+                      }
+                      onNavigate?.();
+                    }}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-all duration-150",
+                      "flex items-center justify-between rounded-lg px-2.5 py-2 text-sm transition-all duration-150",
                       active
                         ? "bg-white/15 font-medium text-white shadow-[inset_3px_0_0_0_#5fb3c7,0_4px_16px_rgba(0,0,0,0.12)] border border-white/10 backdrop-blur-md"
+                        : isTargeted
+                        ? "bg-white/10 text-white font-medium shadow-xs"
                         : "text-white/70 hover:bg-white/10 hover:text-white backdrop-blur-xs",
                     )}
                   >
-                    <Icon className="size-4 shrink-0" aria-hidden />
-                    {item.label}
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <Icon className="size-4 shrink-0" aria-hidden />
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                    {isTargeted && (
+                      <span className="size-1.5 rounded-full bg-brand-teal animate-ping ml-2 shrink-0" />
+                    )}
                   </Link>
                 </li>
               );
@@ -186,8 +210,12 @@ export function AppShell({
     employeeId: user?.employeeId || "",
   };
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [navigatingTo, setNavigatingTo] = React.useState<string | null>(null);
   const pathname = usePathname() || "";
-  React.useEffect(() => setMobileOpen(false), [pathname]);
+  React.useEffect(() => {
+    setMobileOpen(false);
+    setNavigatingTo(null);
+  }, [pathname]);
 
   const portal = pathname.startsWith("/admin")
     ? "Administration"
@@ -220,7 +248,11 @@ export function AppShell({
           </span>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <SidebarNav groups={groups} />
+          <SidebarNav
+            groups={groups}
+            navigatingTo={navigatingTo}
+            onNavigateStart={(href) => setNavigatingTo(href)}
+          />
         </div>
         <div className="border-t border-white/10 px-5 py-3 text-[11px] text-white/45">One Partner. Every Possibility.</div>
       </aside>
@@ -239,9 +271,21 @@ export function AppShell({
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <SidebarNav groups={groups} onNavigate={() => setMobileOpen(false)} />
+              <SidebarNav
+                groups={groups}
+                navigatingTo={navigatingTo}
+                onNavigateStart={(href) => setNavigatingTo(href)}
+                onNavigate={() => setMobileOpen(false)}
+              />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Instant top progress indicator when switching sections */}
+      {navigatingTo && (
+        <div className="fixed top-0 inset-x-0 z-50 h-1 bg-brand-teal/20 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-brand-teal via-sky-400 to-indigo-500 animate-pulse w-full shadow-sm" />
         </div>
       )}
 

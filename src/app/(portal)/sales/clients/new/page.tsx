@@ -10,6 +10,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/feedback";
 import { createClientWithActivityAction } from "@/app/actions/clients";
+import { Image as ImageIcon, Mic, Upload, X, Volume2, FileCheck } from "lucide-react";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -344,6 +345,59 @@ export default function NewClientPage() {
                   </Field>
                 </div>
               )}
+            </CardBody>
+          </Card>
+
+          {/* Section G: Interaction Proofs (Chat Photos & Call Recordings) */}
+          <Card>
+            <CardHeader
+              title="G. Interaction Proofs & Recordings (Optional)"
+              description="Attach WhatsApp / LinkedIn chat screenshots or call recording audio to verify this conversation"
+            />
+            <CardBody className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Chat Photos Dropzone */}
+                <div className="rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/40 p-4">
+                  <div className="flex items-center gap-2 mb-2 text-sky-800 font-semibold text-xs">
+                    <ImageIcon className="size-4 text-sky-600" />
+                    <span>Chat Screenshots & Photos</span>
+                  </div>
+                  <p className="text-[11px] text-ink-muted mb-3">
+                    Upload screenshots of conversation proof (PNG, JPG, WebP)
+                  </p>
+                  <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white border border-sky-300 text-sky-700 text-xs font-semibold cursor-pointer hover:bg-sky-50 transition shadow-2xs">
+                    <Upload className="size-3.5" /> Select Chat Photo(s)
+                    <input
+                      type="file"
+                      name="chat_photos"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {/* Call Recordings Dropzone */}
+                <div className="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/40 p-4">
+                  <div className="flex items-center gap-2 mb-2 text-amber-800 font-semibold text-xs">
+                    <Mic className="size-4 text-amber-600" />
+                    <span>Call Recordings & Voice Notes</span>
+                  </div>
+                  <p className="text-[11px] text-ink-muted mb-3">
+                    Upload phone call audio or voice note (MP3, M4A, WAV)
+                  </p>
+                  <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white border border-amber-300 text-amber-700 text-xs font-semibold cursor-pointer hover:bg-amber-50 transition shadow-2xs">
+                    <Upload className="size-3.5" /> Select Call Recording(s)
+                    <input
+                      type="file"
+                      name="call_recordings"
+                      accept="audio/*,.m4a,.mp3,.wav,.ogg"
+                      multiple
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
             </CardBody>
           </Card>
 

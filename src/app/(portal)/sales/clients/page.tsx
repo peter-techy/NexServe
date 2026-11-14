@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireRole } from "@/lib/auth";
+import { requireRole, getAvailableHrMembers } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Table, TableWrap, Th, Td, Tr, Pagination } from "@/components/ui/table"
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { ForwardDealButton } from "@/components/deals/forward-deal-button";
-import { Plus, Search, Filter, Eye } from "lucide-react";
+import { Plus, Search, Filter, Eye, Paperclip } from "lucide-react";
 import type { WorkStatus } from "@/lib/types";
 
 interface Props {
@@ -30,7 +30,10 @@ export default async function SalesClientsPage({ searchParams }: Props) {
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const supabase = await createClient();
+  const [availableHrList, supabase] = await Promise.all([
+    getAvailableHrMembers(),
+    createClient(),
+  ]);
 
   // Query client activities with joined client info
   let query = supabase
@@ -164,7 +167,19 @@ export default async function SalesClientsPage({ searchParams }: Props) {
                 records.map((row: any) => (
                   <Tr key={row.id}>
                     <Td className="font-medium text-ink">{row.client?.person_name}</Td>
-                    <Td className="font-semibold text-brand-navy">{row.client?.business_name}</Td>
+                    <Td className="font-semibold text-brand-navy">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span>{row.client?.business_name}</span>
+                        {(row.notes?.includes("[PROOFS") || row.notes?.includes("[PROOFS ATTACHED]")) && (
+                          <span
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-brand-teal-50 text-brand-teal-700 border border-brand-teal/20"
+                            title="Chat screenshots or call recordings attached"
+                          >
+                            <Paperclip className="size-2.5" /> Proof
+                          </span>
+                        )}
+                      </div>
+                    </Td>
                     <Td className="text-ink-muted">{row.client?.location}</Td>
                     <Td className="font-mono text-xs">{row.client?.client_number || "—"}</Td>
                     <Td>{row.contact_source}</Td>
@@ -197,13 +212,22 @@ export default async function SalesClientsPage({ searchParams }: Props) {
                     </Td>
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <ForwardDealButton
-                          activityId={row.id}
-                          businessName={row.client?.business_name || ""}
-                          personName={row.client?.person_name}
-                          isForwarded={row.notes?.includes("[FORWARDED TO HR")}
-                          isDone={row.work_status === "Done"}
-                        />
+                        {(() => {
+                          const isForwarded = row.notes?.includes("[FORWARDED TO HR");
+                          const forwardMatch = row.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
+                          const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+                          return (
+                            <ForwardDealButton
+                              activityId={row.id}
+                              businessName={row.client?.business_name || ""}
+                              personName={row.client?.person_name}
+                              isForwarded={isForwarded}
+                              forwardedToName={forwardedToName}
+                              isDone={row.work_status === "Done"}
+                              availableHrList={availableHrList}
+                            />
+                          );
+                        })()}
                         <Button asChild variant="ghost" size="sm">
                           <Link href={`/sales/clients/${row.id}`}>
                             <Eye className="size-3.5 mr-1" /> View / Edit

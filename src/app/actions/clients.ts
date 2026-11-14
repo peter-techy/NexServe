@@ -3,8 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { authorize } from "@/lib/auth";
+import { authorize, getAvailableHrMembers, type HrMember } from "@/lib/auth";
+import {
+  uploadProofFile,
+  recordProofsInActivity,
+  deleteProofFromActivity,
+  getProofsForActivity,
+  type ProofItem,
+  type ProofCategory,
+} from "@/lib/proofs";
 import type { ActionState, WorkStatus, Criterion, DealOutcome } from "@/lib/types";
+
+export async function getAvailableHrAction(): Promise<HrMember[]> {
+  return await getAvailableHrMembers();
+}
 
 export async function createClientWithActivityAction(prevState: ActionState, formData: FormData): Promise<ActionState> {
   const session = await authorize(["sales", "super_admin"]);
@@ -111,7 +123,7 @@ export async function createClientWithActivityAction(prevState: ActionState, for
   }
 
   // 2. Insert Client Activity Record
-  const { error: activityError } = await supabase
+  const { data: newActivity, error: activityError } = await supabase
     .from("client_activities")
     .insert({
       client_id: clientId,
@@ -128,13 +140,45 @@ export async function createClientWithActivityAction(prevState: ActionState, for
       follow_up_at,
       follow_up_notes,
       deal_outcome: deal_outcome || (work_status === "Done" ? "won" : null),
-    });
+    })
+    .select("id")
+    .single();
 
-  if (activityError) {
+  if (activityError || !newActivity) {
     return {
       ok: false,
-      message: activityError.message || "Failed to record client activity.",
+      message: activityError?.message || "Failed to record client activity.",
     };
+  }
+
+  const activityId = newActivity.id;
+
+  // 3. Process any proofs uploaded (Chat Screenshots, Call Recordings)
+  const chatPhotoFiles = formData.getAll("chat_photos") as File[];
+  const callRecordingFiles = formData.getAll("call_recordings") as File[];
+  const uploadedProofs: ProofItem[] = [];
+
+  for (const file of chatPhotoFiles) {
+    if (file && file instanceof File && file.size > 0) {
+      const p = await uploadProofFile(file, activityId, "chat_photo");
+      if (p) uploadedProofs.push(p);
+    }
+  }
+
+  for (const file of callRecordingFiles) {
+    if (file && file instanceof File && file.size > 0) {
+      const p = await uploadProofFile(file, activityId, "call_recording");
+      if (p) uploadedProofs.push(p);
+    }
+  }
+
+  if (uploadedProofs.length > 0) {
+    await recordProofsInActivity(
+      activityId,
+      session.profile.id,
+      session.profile.full_name,
+      uploadedProofs
+    );
   }
 
   revalidatePath("/sales/dashboard");
@@ -267,7 +311,12 @@ export async function completeFollowupAction(activityId: string, outcomeStatus: 
   return { ok: true, message: "Follow-up marked as completed." };
 }
 
-export async function forwardDealToHrAction(activityId: string, handoverNotes?: string): Promise<ActionState> {
+export async function forwardDealToHrAction(
+  activityId: string,
+  handoverNotes?: string,
+  assignedHrId?: string,
+  assignedHrName?: string
+): Promise<ActionState> {
   const session = await authorize(["sales", "super_admin"]);
   if (!session) {
     return { ok: false, message: "Unauthorized." };
@@ -304,7 +353,8 @@ export async function forwardDealToHrAction(activityId: string, handoverNotes?: 
 
   const client = (activity as any).client;
   const existingNotes = activity.notes || "";
-  const forwardStamp = `[FORWARDED TO HR on ${new Date().toLocaleDateString()}: ${handoverNotes || "Deal Done. Handed over to HR."}]`;
+  const hrTargetStr = assignedHrName ? `to ${assignedHrName}` : "to HR Department";
+  const forwardStamp = `[FORWARDED TO HR (${hrTargetStr}) on ${new Date().toLocaleDateString()}: ${handoverNotes || "Deal Done. Handed over to HR."}]`;
   const updatedNotes = existingNotes ? `${existingNotes}\n\n${forwardStamp}` : forwardStamp;
 
   // 2. Mark work_status = 'Done', deal_outcome = 'won', and append forward stamp
@@ -342,6 +392,8 @@ export async function forwardDealToHrAction(activityId: string, handoverNotes?: 
         sales_rep_id: session.profile.id,
         sales_rep_name: session.profile.full_name,
         sales_rep_email: session.profile.email,
+        assigned_hr_id: assignedHrId || null,
+        assigned_hr_name: assignedHrName || "General HR Pool",
         handover_notes: handoverNotes || "Deal successfully closed. Handed over to HR for contract, onboarding & compliance.",
         status: "pending_hr_review",
         forwarded_at: new Date().toISOString(),
@@ -355,8 +407,14 @@ export async function forwardDealToHrAction(activityId: string, handoverNotes?: 
   revalidatePath("/sales/clients");
   revalidatePath("/sales/dashboard");
   revalidatePath("/hr/deals");
+  revalidatePath("/hr/dashboard");
   revalidatePath("/hr/activity");
-  return { ok: true, message: "Deal marked as Done and successfully forwarded to HR!" };
+  return {
+    ok: true,
+    message: assignedHrName
+      ? `Deal marked as Done and successfully forwarded to ${assignedHrName} in HR!`
+      : "Deal marked as Done and successfully forwarded to HR!",
+  };
 }
 
 export async function updateDealHandoverStatusAction(
@@ -400,5 +458,124 @@ export async function updateDealHandoverStatusAction(
   }
 
   revalidatePath("/hr/deals");
+  revalidatePath("/hr/dashboard");
   return { ok: true, message: `Deal handover status updated to ${status}.` };
+}
+
+export async function assignDealToHrAction(
+  logId: number,
+  assignedHrId: string,
+  assignedHrName: string,
+  reassignReason?: string
+): Promise<ActionState> {
+  const session = await authorize(["hr", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized. HR credentials required." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: log, error: fetchErr } = await supabase
+    .from("audit_logs")
+    .select("metadata")
+    .eq("id", logId)
+    .single();
+
+  if (fetchErr || !log) {
+    return { ok: false, message: "Handover record not found." };
+  }
+
+  const existingMeta = (log.metadata as Record<string, any>) || {};
+  const updatedMeta = {
+    ...existingMeta,
+    assigned_hr_id: assignedHrId,
+    assigned_hr_name: assignedHrName,
+    hr_reassigned_by: session.profile.full_name,
+    hr_reassigned_at: new Date().toISOString(),
+    reassign_reason: reassignReason || existingMeta.reassign_reason || null,
+  };
+
+  const { error: updateErr } = await supabase
+    .from("audit_logs")
+    .update({ metadata: updatedMeta })
+    .eq("id", logId);
+
+  if (updateErr) {
+    return { ok: false, message: "Failed to update assigned HR." };
+  }
+
+  revalidatePath("/hr/deals");
+  revalidatePath("/hr/dashboard");
+  return { ok: true, message: `Deal successfully assigned to ${assignedHrName}.` };
+}
+
+export async function uploadClientProofAction(
+  activityId: string,
+  formData: FormData
+): Promise<ActionState & { proof?: ProofItem }> {
+  const session = await authorize(["sales", "hr", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  if (!activityId) {
+    return { ok: false, message: "Activity ID is required." };
+  }
+
+  const file = formData.get("proof_file") as File;
+  const category = (formData.get("category") as ProofCategory) || "other";
+
+  if (!file || file.size === 0) {
+    return { ok: false, message: "Please select a valid file to upload." };
+  }
+
+  if (file.size > 25 * 1024 * 1024) {
+    return { ok: false, message: "File exceeds maximum allowed size of 25MB." };
+  }
+
+  const proof = await uploadProofFile(file, activityId, category);
+  if (!proof) {
+    return { ok: false, message: "Failed to upload file to storage." };
+  }
+
+  const saved = await recordProofsInActivity(
+    activityId,
+    session.profile.id,
+    session.profile.full_name,
+    [proof]
+  );
+
+  if (!saved) {
+    return { ok: false, message: "File uploaded but failed to link proof record." };
+  }
+
+  revalidatePath(`/sales/clients/${activityId}`);
+  revalidatePath("/sales/clients");
+  return { ok: true, message: "Proof uploaded successfully.", proof };
+}
+
+export async function deleteClientProofAction(
+  activityId: string,
+  proofId: string
+): Promise<ActionState> {
+  const session = await authorize(["sales", "hr", "super_admin"]);
+  if (!session) {
+    return { ok: false, message: "Unauthorized." };
+  }
+
+  if (!activityId || !proofId) {
+    return { ok: false, message: "Activity ID and Proof ID are required." };
+  }
+
+  const success = await deleteProofFromActivity(activityId, session.profile.id, proofId);
+  if (!success) {
+    return { ok: false, message: "Failed to delete proof." };
+  }
+
+  revalidatePath(`/sales/clients/${activityId}`);
+  return { ok: true, message: "Proof removed successfully." };
+}
+
+export async function getProofsForActivityAction(activityId: string): Promise<ProofItem[]> {
+  return await getProofsForActivity(activityId);
 }

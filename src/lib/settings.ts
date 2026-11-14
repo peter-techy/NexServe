@@ -19,15 +19,40 @@ export const DEFAULT_SETTINGS: AppSettings = {
   what_we_provide: [],
 };
 
+let memorySettingsCache: { data: AppSettings; expiresAt: number } | null = null;
+const SETTINGS_CACHE_TTL_MS = 60_000; // 60 seconds
+
+export function invalidateSettingsCache() {
+  memorySettingsCache = null;
+}
+
 export const getSettings = cache(async (): Promise<AppSettings> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("app_settings").select("key, value");
-  if (error || !data) return DEFAULT_SETTINGS;
-  const merged = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
-  for (const row of data) merged[row.key] = row.value;
-  const settings = merged as unknown as AppSettings;
-  if (!isValidTimezone(settings.business_timezone)) settings.business_timezone = DEFAULT_TIMEZONE;
-  return settings;
+  const now = Date.now();
+  if (memorySettingsCache && memorySettingsCache.expiresAt > now) {
+    return memorySettingsCache.data;
+  }
+
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.from("app_settings").select("key, value");
+    if (error || !data) {
+      if (memorySettingsCache) return memorySettingsCache.data;
+      return DEFAULT_SETTINGS;
+    }
+    const merged = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
+    for (const row of data) merged[row.key] = row.value;
+    const settings = merged as unknown as AppSettings;
+    if (!isValidTimezone(settings.business_timezone)) settings.business_timezone = DEFAULT_TIMEZONE;
+    
+    memorySettingsCache = {
+      data: settings,
+      expiresAt: now + SETTINGS_CACHE_TTL_MS,
+    };
+    return settings;
+  } catch {
+    if (memorySettingsCache) return memorySettingsCache.data;
+    return DEFAULT_SETTINGS;
+  }
 });
 
 export const getContactSources = cache(async (includeInactive = false): Promise<ContactSource[]> => {
