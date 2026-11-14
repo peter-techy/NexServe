@@ -293,16 +293,8 @@ export default function NewClientPage() {
 
                 {workStatus === "Done" && (
                   <>
-                    <Field
-                      label="Deal Outcome"
-                      htmlFor="deal_outcome"
-                      hint="Distinguishes standard activity completion from a closed commercial deal"
-                    >
-                      <Select id="deal_outcome" name="deal_outcome" defaultValue="won">
-                        <option value="won">Deal Won (Closed-Won)</option>
-                        <option value="lost">Deal Lost</option>
-                      </Select>
-                    </Field>
+                    {/* Deal is automatically won when marked Done */}
+                    <input type="hidden" name="deal_outcome" value="won" />
 
                     <div className="sm:col-span-2 rounded-xl border border-brand-teal/30 bg-brand-teal-50/60 p-4 space-y-3">
                       <div className="flex items-center justify-between">
