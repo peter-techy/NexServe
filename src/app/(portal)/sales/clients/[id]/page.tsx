@@ -48,9 +48,14 @@ export default async function ClientDetailPage({ params }: Props) {
   const client = activity.client;
   const proofs = await getProofsForActivity(activity.id);
 
-  const isForwarded = activity.notes?.includes("[FORWARDED TO HR");
+  const isForwardedRaw = activity.notes?.includes("[FORWARDED TO HR");
   const forwardMatch = activity.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
   const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+  // Strictly verify the forwarded recipient is actually in the HR list and not an admin
+  const isForwarded = Boolean(
+    isForwardedRaw &&
+    (!forwardedToName || availableHrList.some((hr) => hr.role === "hr" && hr.department === "HR" && hr.fullName.toLowerCase() === forwardedToName.toLowerCase()))
+  );
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -99,18 +104,26 @@ export default async function ClientDetailPage({ params }: Props) {
 
       {/* Deal Done but Not Forwarded Callout */}
       {!isForwarded && activity.work_status === "Done" && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 text-xs text-amber-950 flex items-center justify-between shadow-xs">
+        <div className="rounded-xl border border-emerald-300 bg-emerald-50/80 p-3.5 text-xs text-emerald-950 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
-            <Sparkles className="size-4 text-amber-600 shrink-0" />
+            <Sparkles className="size-4 text-emerald-600 shrink-0" />
             <div>
-              <p className="font-semibold text-amber-950">
+              <p className="font-semibold text-emerald-950">
                 Deal Closed! Ready to Forward to HR
               </p>
-              <p className="text-amber-800 text-[11px] mt-0.5">
-                Click &quot;Deal Done · Forward to HR&quot; above to choose an available HR representative.
+              <p className="text-emerald-800 text-[11px] mt-0.5">
+                Select the concerned HR representative from the dropdown menu to hand over this deal.
               </p>
             </div>
           </div>
+          <ForwardDealButton
+            activityId={activity.id}
+            businessName={client.business_name}
+            personName={client.person_name}
+            isForwarded={false}
+            isDone={true}
+            availableHrList={availableHrList}
+          />
         </div>
       )}
 

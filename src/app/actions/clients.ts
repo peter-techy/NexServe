@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { authorize, getAvailableHrMembers, type HrMember } from "@/lib/auth";
 import {
   uploadProofFile,
@@ -181,6 +182,19 @@ export async function createClientWithActivityAction(prevState: ActionState, for
     );
   }
 
+  // If deal is Done and forward to HR was selected, trigger forward to concerned HR
+  const forwardToHr = formData.get("forward_to_hr") === "on";
+  const assignedHrId = (formData.get("assigned_hr_id") as string)?.trim() || null;
+  const handoverNotes = (formData.get("handover_notes") as string)?.trim() || "";
+
+  if (work_status === "Done" && (forwardToHr || assignedHrId) && assignedHrId) {
+    try {
+      await forwardDealToHrAction(activityId, handoverNotes, assignedHrId);
+    } catch (err) {
+      console.error("Auto forward to HR error:", err);
+    }
+  }
+
   revalidatePath("/sales/dashboard");
   revalidatePath("/sales/clients");
   redirect("/sales/clients");
@@ -243,6 +257,19 @@ export async function updateClientActivityAction(prevState: ActionState, formDat
 
   if (error) {
     return { ok: false, message: error.message || "Failed to update record." };
+  }
+
+  // If deal was marked as Done and forwarded to HR was requested
+  const forwardToHr = formData.get("forward_to_hr") === "on";
+  const assignedHrId = (formData.get("assigned_hr_id") as string)?.trim() || null;
+  const handoverNotes = (formData.get("handover_notes") as string)?.trim() || "";
+
+  if (work_status === "Done" && (forwardToHr || assignedHrId) && assignedHrId) {
+    try {
+      await forwardDealToHrAction(activityId, handoverNotes, assignedHrId);
+    } catch (err) {
+      console.error("Auto forward to HR on update error:", err);
+    }
   }
 
   revalidatePath("/sales/dashboard");
@@ -326,6 +353,36 @@ export async function forwardDealToHrAction(
     return { ok: false, message: "Activity ID is required." };
   }
 
+  if (!assignedHrId) {
+    return { ok: false, message: "Please select a concerned HR representative from the dropdown menu." };
+  }
+
+  const adminClient = createAdminClient();
+
+  // Validate that the assigned user is strictly an HR representative in HR department
+  const { data: targetHr } = await adminClient
+    .from("profiles")
+    .select("id, full_name, email, role, department")
+    .eq("id", assignedHrId)
+    .single();
+
+  const isAllowedHr =
+    targetHr &&
+    targetHr.role === "hr" &&
+    targetHr.department === "HR" &&
+    ((targetHr.full_name || "").toLowerCase().includes("akshat") ||
+      (targetHr.full_name || "").toLowerCase().includes("sapan") ||
+      targetHr.email === "hr1.nexserve@gmail.com" ||
+      targetHr.email === "hr2.nexserve@gmail.com");
+
+  if (!isAllowedHr) {
+    return {
+      ok: false,
+      message: "Deals can only be forwarded to HR representatives (Akshat or Sapan). Administrators and other staff are restricted.",
+    };
+  }
+
+  const resolvedHrName = targetHr.full_name || assignedHrName;
   const supabase = await createClient();
 
   // 1. Fetch current activity with client info
@@ -353,8 +410,7 @@ export async function forwardDealToHrAction(
 
   const client = (activity as any).client;
   const existingNotes = activity.notes || "";
-  const hrTargetStr = assignedHrName ? `to ${assignedHrName}` : "to HR Department";
-  const forwardStamp = `[FORWARDED TO HR (${hrTargetStr}) on ${new Date().toLocaleDateString()}: ${handoverNotes || "Deal Done. Handed over to HR."}]`;
+  const forwardStamp = `[FORWARDED TO HR (to ${resolvedHrName}) on ${new Date().toLocaleDateString()}: ${handoverNotes || "Deal Done. Handed over to HR."}]`;
   const updatedNotes = existingNotes ? `${existingNotes}\n\n${forwardStamp}` : forwardStamp;
 
   // 2. Mark work_status = 'Done', deal_outcome = 'won', and append forward stamp
@@ -373,8 +429,8 @@ export async function forwardDealToHrAction(
     return { ok: false, message: updateErr.message || "Failed to update activity status." };
   }
 
-  // 3. Log formal handover in audit_logs for HR and Super Admin inspection
-  const { error: auditErr } = await supabase
+  // 3. Log formal handover in audit_logs for HR inspection using adminClient (bypasses RLS)
+  const { error: auditErr } = await adminClient
     .from("audit_logs")
     .insert({
       actor_user_id: session.profile.id,
@@ -392,8 +448,9 @@ export async function forwardDealToHrAction(
         sales_rep_id: session.profile.id,
         sales_rep_name: session.profile.full_name,
         sales_rep_email: session.profile.email,
-        assigned_hr_id: assignedHrId || null,
-        assigned_hr_name: assignedHrName || "General HR Pool",
+        assigned_hr_id: targetHr.id,
+        assigned_hr_name: resolvedHrName,
+        assigned_hr_email: targetHr.email,
         handover_notes: handoverNotes || "Deal successfully closed. Handed over to HR for contract, onboarding & compliance.",
         status: "pending_hr_review",
         forwarded_at: new Date().toISOString(),
@@ -411,9 +468,7 @@ export async function forwardDealToHrAction(
   revalidatePath("/hr/activity");
   return {
     ok: true,
-    message: assignedHrName
-      ? `Deal marked as Done and successfully forwarded to ${assignedHrName} in HR!`
-      : "Deal marked as Done and successfully forwarded to HR!",
+    message: `Deal marked as Done and successfully forwarded to ${resolvedHrName} in HR!`,
   };
 }
 
@@ -427,9 +482,9 @@ export async function updateDealHandoverStatusAction(
     return { ok: false, message: "Unauthorized. HR credentials required." };
   }
 
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
 
-  const { data: log, error: fetchErr } = await supabase
+  const { data: log, error: fetchErr } = await adminClient
     .from("audit_logs")
     .select("metadata")
     .eq("id", logId)
@@ -448,7 +503,7 @@ export async function updateDealHandoverStatusAction(
     hr_updated_at: new Date().toISOString(),
   };
 
-  const { error: updateErr } = await supabase
+  const { error: updateErr } = await adminClient
     .from("audit_logs")
     .update({ metadata: updatedMeta })
     .eq("id", logId);
@@ -473,9 +528,27 @@ export async function assignDealToHrAction(
     return { ok: false, message: "Unauthorized. HR credentials required." };
   }
 
-  const supabase = await createClient();
+  const adminClient = createAdminClient();
+  const { data: targetHr } = await adminClient
+    .from("profiles")
+    .select("id, full_name, email, role, department")
+    .eq("id", assignedHrId)
+    .single();
 
-  const { data: log, error: fetchErr } = await supabase
+  const isAllowedHr =
+    targetHr &&
+    targetHr.role === "hr" &&
+    targetHr.department === "HR" &&
+    ((targetHr.full_name || "").toLowerCase().includes("akshat") ||
+      (targetHr.full_name || "").toLowerCase().includes("sapan") ||
+      targetHr.email === "hr1.nexserve@gmail.com" ||
+      targetHr.email === "hr2.nexserve@gmail.com");
+
+  if (!isAllowedHr) {
+    return { ok: false, message: "Deals can only be assigned to HR representatives (Akshat or Sapan). Administrators and other staff are restricted." };
+  }
+
+  const { data: log, error: fetchErr } = await adminClient
     .from("audit_logs")
     .select("metadata")
     .eq("id", logId)
@@ -488,14 +561,15 @@ export async function assignDealToHrAction(
   const existingMeta = (log.metadata as Record<string, any>) || {};
   const updatedMeta = {
     ...existingMeta,
-    assigned_hr_id: assignedHrId,
-    assigned_hr_name: assignedHrName,
+    assigned_hr_id: targetHr.id,
+    assigned_hr_name: targetHr.full_name || assignedHrName,
+    assigned_hr_email: targetHr.email,
     hr_reassigned_by: session.profile.full_name,
     hr_reassigned_at: new Date().toISOString(),
     reassign_reason: reassignReason || existingMeta.reassign_reason || null,
   };
 
-  const { error: updateErr } = await supabase
+  const { error: updateErr } = await adminClient
     .from("audit_logs")
     .update({ metadata: updatedMeta })
     .eq("id", logId);

@@ -242,9 +242,13 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
               {dealsWonActivities && dealsWonActivities.length > 0 ? (
                 <div className="divide-y divide-brand-teal/10">
                   {dealsWonActivities.map((act: any) => {
-                    const isForwarded = act.notes?.includes("[FORWARDED TO HR");
+                    const isForwardedRaw = act.notes?.includes("[FORWARDED TO HR");
                     const forwardMatch = act.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
                     const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+                    const isForwarded = Boolean(
+                      isForwardedRaw &&
+                      (!forwardedToName || availableHrList.some((hr) => hr.role === "hr" && hr.department === "HR" && hr.fullName.toLowerCase() === forwardedToName.toLowerCase()))
+                    );
 
                     return (
                       <div
@@ -332,9 +336,13 @@ export default async function SalesDashboardPage({ searchParams }: Props) {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {(() => {
-                          const isForwarded = act.notes?.includes("[FORWARDED TO HR");
+                          const isForwardedRaw = act.notes?.includes("[FORWARDED TO HR");
                           const forwardMatch = act.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
                           const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+                          const isForwarded = Boolean(
+                            isForwardedRaw &&
+                            (!forwardedToName || availableHrList.some((hr) => hr.role === "hr" && hr.department === "HR" && hr.fullName.toLowerCase() === forwardedToName.toLowerCase()))
+                          );
                           return (
                             <ForwardDealButton
                               activityId={act.id}

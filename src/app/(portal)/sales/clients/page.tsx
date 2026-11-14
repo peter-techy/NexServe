@@ -213,15 +213,20 @@ export default async function SalesClientsPage({ searchParams }: Props) {
                     <Td className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {(() => {
-                          const isForwarded = row.notes?.includes("[FORWARDED TO HR");
+                          const isForwardedRaw = row.notes?.includes("[FORWARDED TO HR");
                           const forwardMatch = row.notes?.match(/\[FORWARDED TO HR \((?:to )?([^)]+)\)/);
                           const forwardedToName = forwardMatch ? forwardMatch[1] : undefined;
+                          // Only consider forwarded if forwarded to an actual HR personnel (not admins)
+                          const isForwardedToRealHr = Boolean(
+                            isForwardedRaw &&
+                            (!forwardedToName || availableHrList.some((hr) => hr.role === "hr" && hr.department === "HR" && hr.fullName.toLowerCase() === forwardedToName.toLowerCase()))
+                          );
                           return (
                             <ForwardDealButton
                               activityId={row.id}
                               businessName={row.client?.business_name || ""}
                               personName={row.client?.person_name}
-                              isForwarded={isForwarded}
+                              isForwarded={isForwardedToRealHr}
                               forwardedToName={forwardedToName}
                               isDone={row.work_status === "Done"}
                               availableHrList={availableHrList}

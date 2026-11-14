@@ -9,8 +9,9 @@ import { Field, Input, Textarea, Select, Checkbox } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/feedback";
-import { createClientWithActivityAction } from "@/app/actions/clients";
-import { Image as ImageIcon, Mic, Upload, X, Volume2, FileCheck } from "lucide-react";
+import { createClientWithActivityAction, getAvailableHrAction } from "@/app/actions/clients";
+import type { HrMember } from "@/lib/auth";
+import { Image as ImageIcon, Mic, Upload, X, Volume2, FileCheck, Send, UserCheck } from "lucide-react";
 import type { ActionState } from "@/lib/types";
 
 const initialState: ActionState = {};
@@ -22,6 +23,25 @@ export default function NewClientPage() {
   const [workStatus, setWorkStatus] = React.useState("Followup");
   const [selectedCriteria, setSelectedCriteria] = React.useState<string[]>(["Digital Marketing"]);
   const [followUpRequired, setFollowUpRequired] = React.useState(true);
+  const [forwardToHr, setForwardToHr] = React.useState(false);
+  const [hrList, setHrList] = React.useState<HrMember[]>([]);
+  const [selectedHrId, setSelectedHrId] = React.useState("");
+
+  React.useEffect(() => {
+    if (workStatus === "Done") {
+      getAvailableHrAction().then((members) => {
+        const onlyHr = members.filter((m) => m.role === "hr" && m.department === "HR");
+        setHrList(onlyHr);
+        if (onlyHr.length > 0 && !selectedHrId) {
+          setSelectedHrId(onlyHr[0].id);
+        }
+      });
+    }
+  }, [workStatus, selectedHrId]);
+
+  const validHrList = React.useMemo(() => {
+    return hrList.filter((m) => m.role === "hr" && m.department === "HR");
+  }, [hrList]);
 
   const handleCriteriaToggle = (criterion: string) => {
     setSelectedCriteria(prev =>
@@ -272,16 +292,80 @@ export default function NewClientPage() {
                 </Field>
 
                 {workStatus === "Done" && (
-                  <Field
-                    label="Deal Outcome"
-                    htmlFor="deal_outcome"
-                    hint="Distinguishes standard activity completion from a closed commercial deal"
-                  >
-                    <Select id="deal_outcome" name="deal_outcome" defaultValue="won">
-                      <option value="won">Deal Won (Closed-Won)</option>
-                      <option value="lost">Deal Lost</option>
-                    </Select>
-                  </Field>
+                  <>
+                    <Field
+                      label="Deal Outcome"
+                      htmlFor="deal_outcome"
+                      hint="Distinguishes standard activity completion from a closed commercial deal"
+                    >
+                      <Select id="deal_outcome" name="deal_outcome" defaultValue="won">
+                        <option value="won">Deal Won (Closed-Won)</option>
+                        <option value="lost">Deal Lost</option>
+                      </Select>
+                    </Field>
+
+                    <div className="sm:col-span-2 rounded-xl border border-brand-teal/30 bg-brand-teal-50/60 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-brand-navy">
+                          <input
+                            type="checkbox"
+                            name="forward_to_hr"
+                            checked={forwardToHr}
+                            onChange={(e) => setForwardToHr(e.target.checked)}
+                            className="size-4 rounded border-line-strong text-brand-teal accent-[#187890]"
+                          />
+                          <span className="flex items-center gap-1.5">
+                            <Send className="size-3.5 text-brand-teal" /> Forward this Deal to HR upon creation
+                          </span>
+                        </label>
+                        <span className="text-[11px] text-ink-subtle">
+                          Only concerned HRs (no admins)
+                        </span>
+                      </div>
+
+                      {forwardToHr && (
+                        <div className="space-y-3 pt-3 border-t border-brand-teal/20">
+                          <Field
+                            label="Concerned HR Representative"
+                            htmlFor="assigned_hr_id"
+                            required
+                            hint="Select the specific HR member responsible for client onboarding"
+                          >
+                            <Select
+                              id="assigned_hr_id"
+                              name="assigned_hr_id"
+                              value={selectedHrId}
+                              onChange={(e) => setSelectedHrId(e.target.value)}
+                              required={forwardToHr}
+                            >
+                              <option value="" disabled>-- Select Concerned HR --</option>
+                              {validHrList.map((hr) => {
+                                const isSapan = hr.fullName.toLowerCase().includes("sapan");
+                                const displayName = isSapan ? "Sapan (Vir Sapan Pratap Anand)" : hr.fullName;
+                                return (
+                                  <option key={hr.id} value={hr.id}>
+                                    {displayName} — {hr.email}
+                                  </option>
+                                );
+                              })}
+                            </Select>
+                          </Field>
+
+                          <Field
+                            label="Handover Notes for HR (Optional)"
+                            htmlFor="handover_notes"
+                          >
+                            <Textarea
+                              id="handover_notes"
+                              name="handover_notes"
+                              placeholder="e.g. Client agreed on package. Needs contract copy sent by Monday."
+                              rows={2}
+                            />
+                          </Field>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </CardBody>

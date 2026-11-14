@@ -10,7 +10,7 @@ import { DealHrAssignSelector } from "@/components/deals/deal-hr-assign-selector
 import { CheckCircle2, Clock, FileCheck, Send, Building, User, Phone, MapPin, UserCheck, ExternalLink } from "lucide-react";
 
 export default async function HrDealsHandoverPage() {
-  await requireRole(["hr", "super_admin"]);
+  const session = await requireRole(["hr", "super_admin"]);
   const admin = createAdminClient();
 
   const [availableHrList, { data: logs }] = await Promise.all([
@@ -32,7 +32,17 @@ export default async function HrDealsHandoverPage() {
       .order("created_at", { ascending: false }),
   ]);
 
-  const handovers = logs || [];
+  const allHandovers = logs || [];
+  const isHr = session.profile.role === "hr";
+
+  // If logged in as HR, show only deals forwarded to this concerned HR
+  const handovers = isHr
+    ? allHandovers.filter(
+        (h: any) =>
+          h.metadata?.assigned_hr_id === session.profile.id ||
+          (!h.metadata?.assigned_hr_id && h.metadata?.assigned_hr_name === session.profile.full_name)
+      )
+    : allHandovers;
 
   const pendingCount = handovers.filter((h: any) => h.metadata?.status === "pending_hr_review" || !h.metadata?.status).length;
   const acknowledgedCount = handovers.filter((h: any) => h.metadata?.status === "acknowledged" || h.metadata?.status === "contract_sent").length;
@@ -41,8 +51,12 @@ export default async function HrDealsHandoverPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Deals Handover from Sales"
-        description="Review, acknowledge, and process completed deals forwarded by the sales team for employee crediting and client onboarding."
+        title={isHr ? "Deals Handover (Assigned to You)" : "Deals Handover Overview"}
+        description={
+          isHr
+            ? "Review, acknowledge, and process completed deals forwarded directly to you by the sales team."
+            : "Review completed deals forwarded to HR representatives for employee crediting and client onboarding."
+        }
       />
 
       {/* KPI Cards */}
@@ -50,7 +64,7 @@ export default async function HrDealsHandoverPage() {
         <KpiCard
           label="Total Deals Forwarded"
           value={handovers.length}
-          hint="From all sales representatives"
+          hint={isHr ? "Assigned to your queue" : "Across all HR representatives"}
           icon={<Building className="size-4" />}
         />
         <KpiCard
@@ -248,8 +262,12 @@ export default async function HrDealsHandoverPage() {
                 <Tr>
                   <Td colSpan={8} className="p-0">
                     <EmptyState
-                      title="No forwarded deals yet"
-                      description="When sales agents close deals and click 'Forward to HR', they will appear here for HR onboarding."
+                      title={isHr ? "No deals forwarded to you yet" : "No forwarded deals yet"}
+                      description={
+                        isHr
+                          ? "When sales agents close deals and select you as the concerned HR, they will appear here for contract & onboarding."
+                          : "When sales agents close deals and forward to HR, they will appear here."
+                      }
                     />
                   </Td>
                 </Tr>

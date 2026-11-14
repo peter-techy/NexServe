@@ -160,9 +160,19 @@ export default async function HRDashboardPage({ searchParams }: Props) {
         .eq("action", "deal.forwarded_to_hr"),
     ]);
 
-    availableHrList = hrList;
-    forwardedDeals = logsRes.data || [];
-    forwardedDealsCount = countRes.count || 0;
+    availableHrList = hrList.filter((m) => m.role === "hr");
+    const allLogs = logsRes.data || [];
+    const isHr = session.profile.role === "hr";
+
+    // For HR members, only display deals forwarded to them
+    forwardedDeals = isHr
+      ? allLogs.filter(
+          (d: any) =>
+            d.metadata?.assigned_hr_id === session.profile.id ||
+            (!d.metadata?.assigned_hr_id && d.metadata?.assigned_hr_name === session.profile.full_name)
+        )
+      : allLogs;
+    forwardedDealsCount = forwardedDeals.length;
     pendingDealsCount = forwardedDeals.filter(
       (d: any) => d.metadata?.status === "pending_hr_review" || !d.metadata?.status
     ).length;

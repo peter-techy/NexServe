@@ -90,42 +90,41 @@ export interface HrMember {
   employeeId: string;
 }
 
-let cachedHrMembers: { list: HrMember[]; expiresAt: number } | null = null;
-const HR_MEMBERS_CACHE_TTL_MS = 60_000; // 60s cache
-
-export function invalidateHrMembersCache() {
-  cachedHrMembers = null;
-}
-
 export async function getAvailableHrMembers(): Promise<HrMember[]> {
-  const now = Date.now();
-  if (cachedHrMembers && cachedHrMembers.expiresAt > now) {
-    return cachedHrMembers.list;
-  }
-
   try {
     const admin = createAdminClient();
+    // Strictly fetch active HR department personnel only — exclude admins and other sector employees
     const { data, error } = await admin
       .from("profiles")
       .select("id, full_name, email, role, department, employee_id")
       .eq("is_active", true)
-      .or("role.eq.hr,department.eq.HR,role.eq.super_admin")
+      .eq("role", "hr")
+      .eq("department", "HR")
       .order("full_name");
 
     if (error || !data) return [];
-    const list = data.map((p) => ({
-      id: p.id,
-      fullName: p.full_name,
-      email: p.email,
-      role: p.role as AppRole,
-      department: p.department as Department,
-      employeeId: p.employee_id,
-    }));
 
-    cachedHrMembers = {
-      list,
-      expiresAt: now + HR_MEMBERS_CACHE_TTL_MS,
-    };
+    // Strictly restrict to ONLY Akshat and Sapan (Vir Sapan Pratap Anand). Rest all are admins.
+    const list = data
+      .filter((p) => {
+        if (p.role !== "hr" || p.department !== "HR") return false;
+        const name = (p.full_name || "").toLowerCase();
+        const email = (p.email || "").toLowerCase();
+        return (
+          name.includes("akshat") ||
+          name.includes("sapan") ||
+          email === "hr1.nexserve@gmail.com" ||
+          email === "hr2.nexserve@gmail.com"
+        );
+      })
+      .map((p) => ({
+        id: p.id,
+        fullName: p.full_name,
+        email: p.email,
+        role: p.role as AppRole,
+        department: p.department as Department,
+        employeeId: p.employee_id,
+      }));
 
     return list;
   } catch {

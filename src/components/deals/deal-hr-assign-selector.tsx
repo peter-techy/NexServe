@@ -17,11 +17,15 @@ interface DealHrAssignSelectorProps {
 
 export function DealHrAssignSelector({
   logId,
-  currentAssignedName = "General HR Pool",
+  currentAssignedName = "Unassigned HR",
   currentAssignedId,
   availableHrList = [],
   compact = false,
 }: DealHrAssignSelectorProps) {
+  const filteredHrList = React.useMemo(
+    () => availableHrList.filter((m) => m.role === "hr" && m.department === "HR"),
+    [availableHrList]
+  );
   const [assignedName, setAssignedName] = React.useState(currentAssignedName);
   const [assignedId, setAssignedId] = React.useState(currentAssignedId);
   const [isPending, setIsPending] = React.useState(false);
@@ -100,12 +104,12 @@ export function DealHrAssignSelector({
         >
           <div className="px-2.5 py-1.5 border-b border-line text-[11px] font-bold uppercase tracking-wider text-ink-subtle flex items-center justify-between">
             <span>Assign HR Employee</span>
-            <span className="font-normal text-[10px] text-brand-teal">{availableHrList.length} Available</span>
+            <span className="font-normal text-[10px] text-brand-teal">{filteredHrList.length} Available</span>
           </div>
 
           <div className="max-h-60 overflow-y-auto py-1 space-y-0.5">
-            {availableHrList.length > 0 ? (
-              availableHrList.map((member) => {
+            {filteredHrList.length > 0 ? (
+              filteredHrList.map((member) => {
                 const isSelected = member.id === assignedId || member.fullName === assignedName;
                 return (
                   <DropdownMenu.Item
@@ -135,9 +139,13 @@ export function DealHrAssignSelector({
                           .join("")}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-xs">{member.fullName}</p>
+                        <p className="truncate text-xs">
+                          {member.fullName.toLowerCase().includes("sapan")
+                            ? "Sapan (Vir Sapan Pratap Anand)"
+                            : member.fullName}
+                        </p>
                         <p className="text-[10px] text-ink-subtle truncate">
-                          {member.role === "super_admin" ? "Super Admin" : "HR Team"} • {member.employeeId || member.email}
+                          HR Department • {member.employeeId || member.email}
                         </p>
                       </div>
                     </div>
