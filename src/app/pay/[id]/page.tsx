@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getPaymentByIdOrToken } from "@/lib/payments";
 import { ClientOnboardingForm } from "@/components/payments/client-onboarding-form";
+import { env } from "@/lib/env";
 import { AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 
 interface Props {
@@ -74,7 +75,7 @@ export default async function ClientPaymentPage({ params }: Props) {
     );
   }
 
-  const razorpayKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+  const razorpayKeyId = env.razorpayKeyId() || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
 
   return (
     <div className="min-h-screen bg-[#f4f7fb]/70 text-[#142f4c] selection:bg-[#185fa5]/15 relative flex flex-col justify-between">

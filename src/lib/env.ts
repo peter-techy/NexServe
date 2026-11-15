@@ -7,8 +7,11 @@ export const env = {
   supabaseUrl: () => process.env.NEXT_PUBLIC_SUPABASE_URL || FALLBACK_SUPABASE_URL,
   supabaseAnonKey: () => process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || FALLBACK_ANON_KEY,
   serviceRoleKey: () => process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-  siteUrl: () => (process.env.NEXT_PUBLIC_SITE_URL || "https://nex-serve-liard.vercel.app").replace(/\/$/, ""),
+  siteUrl: () => (process.env.NEXT_PUBLIC_SITE_URL || "https://nexserves.co.in").replace(/\/$/, ""),
   resendApiKey: () => process.env.RESEND_API_KEY || "",
   contactNotifyEmail: () => process.env.CONTACT_NOTIFY_EMAIL || "",
   contactFromEmail: () => process.env.CONTACT_FROM_EMAIL || "",
+  razorpayKeyId: () => process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || "",
+  razorpayKeySecret: () => process.env.RAZORPAY_KEY_SECRET || "",
+  razorpayWebhookSecret: () => process.env.RAZORPAY_WEBHOOK_SECRET || "",
 };
