@@ -1,11 +1,11 @@
-export type AppRole = "super_admin" | "hr" | "sales";
-export type Department = "HR" | "Sales" | "Administration";
+export type AppRole = "super_admin" | "hr" | "sales" | "finance";
+export type Department = "HR" | "Sales" | "Administration" | "Finance";
 export type WorkStatus = "Followup" | "Done" | "Cancelled";
 export type DealOutcome = "won" | "lost";
 export type InquiryStatus = "new" | "in_review" | "resolved" | "spam";
 
-export const ROLES: AppRole[] = ["super_admin", "hr", "sales"];
-export const DEPARTMENTS: Department[] = ["HR", "Sales", "Administration"];
+export const ROLES: AppRole[] = ["super_admin", "hr", "sales", "finance"];
+export const DEPARTMENTS: Department[] = ["HR", "Sales", "Administration", "Finance"];
 export const WORK_STATUSES: WorkStatus[] = ["Followup", "Done", "Cancelled"];
 export const CRITERIA = ["Digital Marketing", "Content Creation", "Special Demand"] as const;
 export type Criterion = (typeof CRITERIA)[number];
@@ -14,6 +14,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
   hr: "HR",
   sales: "Sales",
+  finance: "Finance",
 };
 
 export const WORK_STATUS_LABELS: Record<WorkStatus, string> = {
@@ -184,4 +185,27 @@ export interface ActionState {
   message?: string;
   fieldErrors?: Record<string, string[] | undefined>;
   values?: Record<string, string | string[]>;
+}
+
+export type PaymentStatus = "Pending" | "Done";
+
+export interface ClientPayment {
+  id: string;
+  link_token: string;
+  salesperson_id: string;
+  salesperson_name?: string;
+  salesperson_email?: string;
+  amount: number;
+  client_name: string | null;
+  business_name: string | null;
+  phone: string | null;
+  location: string | null;
+  deadline: string | null;
+  status: PaymentStatus;
+  razorpay_payment_id?: string | null;
+  razorpay_order_id?: string | null;
+  razorpay_signature?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }

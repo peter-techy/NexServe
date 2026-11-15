@@ -41,7 +41,7 @@ export function PublicNavbar({
         <Link href="/#portfolio" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
           Portfolio
         </Link>
-        <Link href="/#careers" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
+        <Link href="/careers" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
           Careers & Apply
         </Link>
         <Link href="/#contact" className="text-sm font-medium text-[#334f6d] transition hover:text-[#185fa5]">
@@ -108,7 +108,7 @@ export function PublicNavbar({
             Portfolio
           </Link>
           <Link
-            href="/#careers"
+            href="/careers"
             className="border-b border-line py-3 text-sm font-medium text-[#334f6d]"
             onClick={() => setMobileOpen(false)}
           >

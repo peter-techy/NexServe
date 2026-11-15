@@ -62,10 +62,25 @@ export function StatusBadge({ status }: { status: WorkStatus }) {
 }
 
 export function RoleBadge({ role, className }: { role: AppRole; className?: string }) {
-  const tone: Tone = role === "super_admin" ? "navy" : role === "hr" ? "teal" : "neutral";
+  const tone: Tone = role === "super_admin" ? "navy" : role === "hr" ? "teal" : role === "finance" ? "navy" : "neutral";
   return (
     <Badge tone={tone} className={className}>
       {ROLE_LABELS[role]}
+    </Badge>
+  );
+}
+
+export function PaymentStatusBadge({ status }: { status: "Pending" | "Done" }) {
+  if (status === "Done") {
+    return (
+      <Badge tone="success" icon={<CheckCircle2 aria-hidden className="size-3 text-emerald-600" />}>
+        Done
+      </Badge>
+    );
+  }
+  return (
+    <Badge tone="warning" icon={<Clock3 aria-hidden className="size-3 text-amber-600" />}>
+      Pending
     </Badge>
   );
 }

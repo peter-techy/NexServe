@@ -78,6 +78,7 @@ export async function authorize(roles: AppRole[]): Promise<SessionContext | null
 export function homeFor(role: AppRole): string {
   if (role === "super_admin") return "/admin/dashboard";
   if (role === "hr") return "/hr/dashboard";
+  if (role === "finance") return "/finance/dashboard";
   return "/sales/dashboard";
 }
 

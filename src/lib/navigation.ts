@@ -13,7 +13,8 @@ export type NavIcon =
   | "settings"
   | "inquiries"
   | "audit"
-  | "recruitment";
+  | "recruitment"
+  | "payments";
 
 export interface NavItem {
   label: string;
@@ -30,17 +31,24 @@ const salesItems: NavItem[] = [
   { label: "Dashboard", href: "/sales/dashboard", icon: "dashboard" },
   { label: "Clients", href: "/sales/clients", icon: "clients" },
   { label: "Follow-ups", href: "/sales/follow-ups", icon: "followups" },
+  { label: "Payments", href: "/sales/payments", icon: "payments" },
   { label: "Attendance / Work Sessions", href: "/sales/attendance", icon: "attendance" },
 ];
 
 const hrItems: NavItem[] = [
   { label: "Dashboard", href: "/hr/dashboard", icon: "dashboard" },
   { label: "Job Applications", href: "/hr/applications", icon: "recruitment" },
-  { label: "Deals Handover", href: "/hr/deals", icon: "clients" },
+  { label: "Clients", href: "/hr/clients", icon: "clients" },
+  { label: "Deals Handover", href: "/hr/deals", icon: "activity" },
   { label: "Employees", href: "/hr/employees", icon: "employees" },
   { label: "Employee Activity", href: "/hr/activity", icon: "activity" },
   { label: "Reports & Excel Export", href: "/hr/reports", icon: "reports" },
   { label: "Attendance Records", href: "/hr/attendance", icon: "attendance" },
+];
+
+const financeItems: NavItem[] = [
+  { label: "Dashboard", href: "/finance/dashboard", icon: "dashboard" },
+  { label: "Clients", href: "/finance/clients", icon: "clients" },
 ];
 
 export function navFor(role: AppRole): NavGroup[] {
@@ -50,6 +58,9 @@ export function navFor(role: AppRole): NavGroup[] {
   if (role === "hr") {
     return [{ items: hrItems }, { label: "Account", items: [{ label: "My Profile", href: "/profile", icon: "profile" }] }];
   }
+  if (role === "finance") {
+    return [{ items: financeItems }, { label: "Account", items: [{ label: "My Profile", href: "/profile", icon: "profile" }] }];
+  }
   return [
     { items: [{ label: "Dashboard", href: "/admin/dashboard", icon: "dashboard" }] },
     {
@@ -58,7 +69,15 @@ export function navFor(role: AppRole): NavGroup[] {
         { label: "Sales Dashboard", href: "/sales/dashboard", icon: "dashboard" },
         { label: "Clients", href: "/sales/clients", icon: "clients" },
         { label: "Follow-ups", href: "/sales/follow-ups", icon: "followups" },
+        { label: "Payments", href: "/sales/payments", icon: "payments" },
         { label: "Work Sessions", href: "/sales/attendance", icon: "attendance" },
+      ],
+    },
+    {
+      label: "Finance",
+      items: [
+        { label: "Finance Dashboard", href: "/finance/dashboard", icon: "dashboard" },
+        { label: "Clients", href: "/finance/clients", icon: "clients" },
       ],
     },
     {
@@ -66,7 +85,8 @@ export function navFor(role: AppRole): NavGroup[] {
       items: [
         { label: "HR Dashboard", href: "/hr/dashboard", icon: "dashboard" },
         { label: "Job Applications", href: "/hr/applications", icon: "recruitment" },
-        { label: "Deals Handover", href: "/hr/deals", icon: "clients" },
+        { label: "Clients", href: "/hr/clients", icon: "clients" },
+        { label: "Deals Handover", href: "/hr/deals", icon: "activity" },
         { label: "Employee Activity", href: "/hr/activity", icon: "activity" },
         { label: "Attendance Records", href: "/hr/attendance", icon: "attendance" },
       ],

@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/auth",
   "/careers",
   "/apply",
+  "/pay",
 ];
 
 function isPublic(pathname: string) {

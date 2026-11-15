@@ -25,9 +25,11 @@ export async function createEmployeeAction(
   const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
   const phone = (formData.get("phone") as string)?.trim() || null;
   const role = (formData.get("role") as AppRole) || "sales";
-  let department = (formData.get("department") as Department) || (role === "hr" ? "HR" : "Sales");
+  let department = (formData.get("department") as Department) || (role === "hr" ? "HR" : role === "finance" ? "Finance" : "Sales");
   if (role === "super_admin" && !department) {
     department = "Administration";
+  } else if (role === "finance" && !department) {
+    department = "Finance";
   }
   const tempPassword = (formData.get("password") as string)?.trim() || "NexServe@2026";
 
@@ -153,9 +155,11 @@ export async function updateEmployeeAction(
   const email = (formData.get("email") as string)?.trim().toLowerCase() || "";
   const phone = (formData.get("phone") as string)?.trim() || null;
   const role = (formData.get("role") as AppRole) || "sales";
-  let department = (formData.get("department") as Department) || (role === "hr" ? "HR" : "Sales");
+  let department = (formData.get("department") as Department) || (role === "hr" ? "HR" : role === "finance" ? "Finance" : "Sales");
   if (role === "super_admin" && !department) {
     department = "Administration";
+  } else if (role === "finance" && !department) {
+    department = "Finance";
   }
   const newPassword = (formData.get("password") as string)?.trim() || "";
 

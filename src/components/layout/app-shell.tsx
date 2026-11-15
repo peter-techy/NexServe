@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ClipboardList,
   Clock,
+  CreditCard,
   FileSpreadsheet,
   History,
   LayoutDashboard,
@@ -47,6 +48,7 @@ const ICONS: Record<NavIcon, React.ComponentType<{ className?: string }>> = {
   inquiries: Mail,
   audit: History,
   recruitment: UserCheck,
+  payments: CreditCard,
 };
 
 export interface ShellUser {

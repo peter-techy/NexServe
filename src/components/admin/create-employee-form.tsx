@@ -32,6 +32,8 @@ export function CreateEmployeeForm() {
       setDepartment("HR");
     } else if (nextRole === "sales") {
       setDepartment("Sales");
+    } else if (nextRole === "finance") {
+      setDepartment("Finance");
     } else if (nextRole === "super_admin") {
       setDepartment("Administration");
     }
@@ -165,6 +167,7 @@ export function CreateEmployeeForm() {
                 disabled={isPending}
               >
                 <option value="sales">Sales</option>
+                <option value="finance">Finance</option>
                 <option value="hr">HR</option>
                 <option value="super_admin">Super Admin</option>
               </Select>
@@ -180,6 +183,7 @@ export function CreateEmployeeForm() {
                 disabled={isPending}
               >
                 <option value="Sales">Sales</option>
+                <option value="Finance">Finance</option>
                 <option value="HR">HR</option>
                 <option value="Administration">Administration</option>
               </Select>
