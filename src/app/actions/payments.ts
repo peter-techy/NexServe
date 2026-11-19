@@ -137,7 +137,16 @@ export async function submitClientOnboardingAction(
  */
 export async function completeClientPaymentAction(
   paymentId: string,
-  razorpayPaymentId?: string
+  razorpayPaymentId?: string,
+  details?: {
+    razorpayOrderId?: string;
+    razorpaySignature?: string;
+    clientName?: string;
+    businessName?: string;
+    phone?: string;
+    location?: string;
+    deadline?: string | null;
+  }
 ): Promise<{ ok: boolean; message: string; payment?: any }> {
   if (!paymentId) {
     return { ok: false, message: "Missing payment reference identifier." };
@@ -146,6 +155,13 @@ export async function completeClientPaymentAction(
   try {
     const payment = await completePayment(paymentId, {
       payment_id: razorpayPaymentId,
+      order_id: details?.razorpayOrderId,
+      signature: details?.razorpaySignature,
+      client_name: details?.clientName,
+      business_name: details?.businessName,
+      phone: details?.phone,
+      location: details?.location,
+      deadline: details?.deadline,
     });
 
     if (!payment) {

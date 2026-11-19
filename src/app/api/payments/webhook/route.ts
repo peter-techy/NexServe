@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import crypto from "crypto";
 import { completePayment } from "@/lib/payments";
 import { env } from "@/lib/env";
@@ -34,10 +35,36 @@ export async function POST(request: NextRequest) {
       const paymentId = notes?.payment_id || notes?.id;
 
       if (paymentId) {
-        await completePayment(paymentId, {
+        const details: {
+          payment_id?: string;
+          order_id?: string;
+          client_name?: string;
+          business_name?: string;
+          phone?: string;
+          location?: string;
+          deadline?: string;
+        } = {
           payment_id: payload?.id,
           order_id: payload?.order_id,
-        });
+        };
+
+        if (notes.client_name) details.client_name = String(notes.client_name);
+        if (notes.business_name) details.business_name = String(notes.business_name);
+        if (notes.phone || payload?.contact) details.phone = String(notes.phone || payload?.contact);
+        if (notes.location) details.location = String(notes.location);
+        if (notes.deadline) details.deadline = String(notes.deadline);
+
+        await completePayment(paymentId, details);
+
+        try {
+          revalidatePath(`/pay/${paymentId}`);
+          revalidatePath("/sales/payments");
+          revalidatePath("/finance/dashboard");
+          revalidatePath("/finance/clients");
+          revalidatePath("/hr/clients");
+        } catch {
+          // ignore revalidation errors in unit test or non-request contexts
+        }
       }
     }
 

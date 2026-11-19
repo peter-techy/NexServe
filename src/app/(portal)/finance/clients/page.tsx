@@ -6,8 +6,10 @@ import { Table, TableWrap, Th, Td, Tr, Pagination } from "@/components/ui/table"
 import { PaymentStatusBadge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/feedback";
 import { CopyPaymentLinkButton } from "@/components/payments/copy-payment-link-button";
-import { Search, IndianRupee, User, Filter, FileSpreadsheet } from "lucide-react";
+import { Search, IndianRupee, User, Filter, FileSpreadsheet, Download } from "lucide-react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   searchParams: Promise<{
@@ -39,6 +41,14 @@ export default async function FinanceClientsPage({ searchParams }: Props) {
       <PageHeader
         title="Client Accounts & Receivables"
         description="Unified finance directory of all client payments, onboarding records, and closing salespersons"
+        actions={
+          <a
+            href="/api/payments/history?format=csv"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+          >
+            <Download className="size-3.5" /> Export Payment History (CSV)
+          </a>
+        }
       />
 
       {/* Filter / Search Bar */}
@@ -154,9 +164,29 @@ export default async function FinanceClientsPage({ searchParams }: Props) {
                       ₹{item.amount.toLocaleString("en-IN")}
                     </Td>
 
-                    {/* 7. Status (Done / Pending) */}
+                    {/* 7. Status (Done / Pending) + Payment Ref & Date */}
                     <Td>
-                      <PaymentStatusBadge status={item.status} />
+                      <div className="flex flex-col gap-1">
+                        <div>
+                          <PaymentStatusBadge status={item.status} />
+                        </div>
+                        {item.razorpay_payment_id && (
+                          <span className="font-mono text-[10px] text-slate-500">
+                            {item.razorpay_payment_id}
+                          </span>
+                        )}
+                        {item.paid_at && (
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(item.paid_at).toLocaleString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </div>
                     </Td>
 
                     {/* 8. Sales Person's Name */}

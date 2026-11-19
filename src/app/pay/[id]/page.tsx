@@ -7,6 +7,8 @@ import { ClientOnboardingForm } from "@/components/payments/client-onboarding-fo
 import { env } from "@/lib/env";
 import { AlertCircle, ArrowLeft, ShieldCheck } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ id: string }>;
 }

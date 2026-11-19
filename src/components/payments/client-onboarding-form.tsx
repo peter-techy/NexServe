@@ -107,7 +107,11 @@ export function ClientOnboardingForm({
           },
           notes: {
             payment_id: payment.id,
-            business_name: businessName,
+            client_name: clientName.trim(),
+            business_name: businessName.trim(),
+            phone: phone.trim(),
+            location: location.trim(),
+            deadline: deadline || "",
           },
           theme: {
             color: "#185fa5",
@@ -115,12 +119,48 @@ export function ClientOnboardingForm({
           handler: async function (response: any) {
             const payId = response?.razorpay_payment_id || `rzp_${Date.now()}`;
             setPaymentIdRecord(payId);
-            const compRes = await completeClientPaymentAction(payment.id, payId);
-            if (compRes.ok) {
+
+            let savedOk = false;
+            try {
+              const apiRes = await fetch("/api/payments/complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  paymentId: payment.id,
+                  razorpayPaymentId: payId,
+                  razorpayOrderId: response?.razorpay_order_id,
+                  razorpaySignature: response?.razorpay_signature,
+                  clientName: clientName.trim(),
+                  businessName: businessName.trim(),
+                  phone: phone.trim(),
+                  location: location.trim(),
+                  deadline: deadline || null,
+                }),
+              });
+              const apiJson = await apiRes.json().catch(() => null);
+              savedOk = Boolean(apiRes.ok && apiJson?.ok);
+            } catch {
+              savedOk = false;
+            }
+
+            if (!savedOk) {
+              const compRes = await completeClientPaymentAction(payment.id, payId, {
+                razorpayOrderId: response?.razorpay_order_id,
+                razorpaySignature: response?.razorpay_signature,
+                clientName: clientName.trim(),
+                businessName: businessName.trim(),
+                phone: phone.trim(),
+                location: location.trim(),
+                deadline: deadline || null,
+              });
+              savedOk = compRes.ok;
+            }
+
+            if (savedOk) {
               setIsCompleted(true);
-              toast.success("Payment successful! Your onboarding is complete.");
+              toast.success("Payment successful! Your onboarding details and receipt have been saved.");
             } else {
-              toast.error("Payment received, updating system records...");
+              toast.error("Payment received — please keep your Razorpay Ref ID while records sync.");
               setIsCompleted(true);
             }
             setIsProcessingPayment(false);
@@ -153,7 +193,13 @@ export function ClientOnboardingForm({
       const simulatedPayId = `pay_sim_${Date.now()}`;
       setPaymentIdRecord(simulatedPayId);
 
-      const compRes = await completeClientPaymentAction(payment.id, simulatedPayId);
+      const compRes = await completeClientPaymentAction(payment.id, simulatedPayId, {
+        clientName: clientName.trim(),
+        businessName: businessName.trim(),
+        phone: phone.trim(),
+        location: location.trim(),
+        deadline: deadline || null,
+      });
       if (compRes.ok) {
         setIsCompleted(true);
         setShowDemoModal(false);

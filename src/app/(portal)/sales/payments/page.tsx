@@ -7,8 +7,10 @@ import { PaymentStatusBadge } from "@/components/ui/badge";
 import { KpiCard, EmptyState } from "@/components/ui/feedback";
 import { PaymentGeneratorModal } from "@/components/payments/payment-generator-modal";
 import { CopyPaymentLinkButton } from "@/components/payments/copy-payment-link-button";
-import { Search, IndianRupee, Clock, CheckCircle2, Link2 } from "lucide-react";
+import { Search, IndianRupee, Clock, CheckCircle2, Link2, Download } from "lucide-react";
 import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 interface Props {
   searchParams: Promise<{
@@ -51,7 +53,15 @@ export default async function SalesPaymentsPage({ searchParams }: Props) {
         title="Payment Links & Onboarding"
         description="Generate unique shareable payment links for clients and track payment status"
         actions={
-          <PaymentGeneratorModal salespersonName={session.profile.full_name} />
+          <div className="flex items-center gap-2">
+            <a
+              href="/api/payments/history?format=csv"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+            >
+              <Download className="size-3.5" /> Export CSV
+            </a>
+            <PaymentGeneratorModal salespersonName={session.profile.full_name} />
+          </div>
         }
       />
 
@@ -195,9 +205,29 @@ export default async function SalesPaymentsPage({ searchParams }: Props) {
                       ₹{item.amount.toLocaleString("en-IN")}
                     </Td>
 
-                    {/* 7. Status (Done / Pending) */}
+                    {/* 7. Status (Done / Pending) + Payment Ref & Date */}
                     <Td>
-                      <PaymentStatusBadge status={item.status} />
+                      <div className="flex flex-col gap-1">
+                        <div>
+                          <PaymentStatusBadge status={item.status} />
+                        </div>
+                        {item.razorpay_payment_id && (
+                          <span className="font-mono text-[10px] text-slate-500">
+                            {item.razorpay_payment_id}
+                          </span>
+                        )}
+                        {item.paid_at && (
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(item.paid_at).toLocaleString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </div>
                     </Td>
 
                     {/* Actions: Copy Link */}
