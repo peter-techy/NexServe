@@ -10,6 +10,8 @@ const PUBLIC_PATHS = [
   "/careers",
   "/apply",
   "/pay",
+  "/api/payments/complete",
+  "/api/payments/webhook",
 ];
 
 function isPublic(pathname: string) {
