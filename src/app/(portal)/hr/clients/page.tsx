@@ -8,6 +8,8 @@ import { EmptyState, KpiCard } from "@/components/ui/feedback";
 import { CopyPaymentLinkButton } from "@/components/payments/copy-payment-link-button";
 import { Search, Users, User, CheckCircle2, Clock } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<{
     q?: string;
